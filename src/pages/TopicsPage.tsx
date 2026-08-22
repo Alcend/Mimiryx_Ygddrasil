@@ -11,14 +11,21 @@ import {
   BookOpen,
   Sparkles,
   CheckCircle2,
+  Plus,
+  Search,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { resolveNoteTopic } from './NotesPage';
+import { Topic } from '../types';
 
 export const TopicsPage: React.FC = () => {
-  const { topics, notes, labs } = useApp();
+  const { topics, addTopic, notes, labs } = useApp();
   const navigate = useNavigate();
   const [flippedTopics, setFlippedTopics] = useState<Record<string, boolean>>({});
+  const [filterQuery, setFilterQuery] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTopicName, setNewTopicName] = useState('');
+  const [newTopicDesc, setNewTopicDesc] = useState('');
 
   const handleToggleFlip = (topicId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -31,21 +38,77 @@ export const TopicsPage: React.FC = () => {
     });
   };
 
+  const handleCreateTopic = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTopicName.trim()) return;
+    
+    addTopic({
+      name: newTopicName,
+      description: newTopicDesc,
+      category: 'Core Concept',
+      color: 'hsl(var(--primary))',
+      code: newTopicName.substring(0, 3).toUpperCase(),
+      icon: 'box'
+    });
+    
+    setNewTopicName('');
+    setNewTopicDesc('');
+    setShowCreateModal(false);
+    sounds.playSuccess();
+  };
+
+  const filteredTopics = topics.filter(t => 
+    t.name.toLowerCase().includes(filterQuery.toLowerCase()) || 
+    (t.description || '').toLowerCase().includes(filterQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      <div>
-        <h2 className="text-2xl font-heading font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Boxes className="w-6 h-6 text-primary" /> Neural Topic Clusters & Grimoire Branches
-        </h2>
-        <p className="text-xs text-muted-foreground font-mono mt-0.5">
-          Modular knowledge domains bridging foundational infrastructure with machine intelligence.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-heading font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Boxes className="w-6 h-6 text-primary" /> Neural Topic Clusters & Grimoire Branches
+          </h2>
+          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+            Modular knowledge domains bridging foundational infrastructure with machine intelligence.
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Filter topics..."
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              className="pl-9 pr-4 py-2 bg-card border border-border rounded-xl text-xs font-mono focus:outline-none focus:border-primary/50 w-full md:w-64"
+            />
+          </div>
+          <button
+            onClick={() => { sounds.playClick(); setShowCreateModal(true); }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-mono text-xs rounded-xl shadow-neon-glow hover:opacity-90 transition-opacity whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" /> New Topic
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {topics.map((topic) => {
-          const topicNotes = notes.filter((n) => resolveNoteTopic(n, topics)?.id === topic.id);
-          const topicLabs = labs.filter((l) => l.topicId === topic.id);
+      {filteredTopics.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+            <Search className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-mono text-foreground font-bold">No topics found</p>
+            <p className="text-xs font-mono text-muted-foreground mt-1">Try adjusting your search query.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTopics.map((topic) => {
+            const topicNotes = notes.filter((n) => resolveNoteTopic(n, topics)?.id === topic.id);
+            const topicLabs = labs.filter((l) => l.topicId === topic.id);
           const masteredCount = topicNotes.filter((n) => n.status === 'mastered').length;
           const progress = topicNotes.length ? Math.round((masteredCount / topicNotes.length) * 100) : 0;
           const isFlipped = !!flippedTopics[topic.id];
@@ -194,6 +257,67 @@ export const TopicsPage: React.FC = () => {
           );
         })}
       </div>
+    )}
+
+      {/* Create Topic Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border border-primary/30 rounded-2xl w-full max-w-md cyber-card shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h3 className="font-heading font-bold text-foreground">Ignite New Topic Branch</h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateTopic} className="p-4 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono text-muted-foreground">Topic Name</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="e.g., Quantum Computing"
+                  value={newTopicName}
+                  onChange={(e) => setNewTopicName(e.target.value)}
+                  className="w-full bg-background/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 font-mono"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono text-muted-foreground">Description (Optional)</label>
+                <textarea
+                  rows={3}
+                  placeholder="Brief summary of this knowledge domain..."
+                  value={newTopicDesc}
+                  onChange={(e) => setNewTopicDesc(e.target.value)}
+                  className="w-full bg-background/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 font-mono resize-none"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newTopicName.trim()}
+                  className="px-4 py-2 bg-primary text-primary-foreground font-mono text-xs rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Ignite Topic
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

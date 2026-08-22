@@ -11,6 +11,14 @@ interface AppContextType {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 
+  // AI & Security Settings
+  geminiKey: string | null;
+  setGeminiKey: (key: string | null) => void;
+  isSettingsOpen: boolean;
+  setIsSettingsOpen: (isOpen: boolean) => void;
+  isOracleOpen: boolean;
+  setIsOracleOpen: (isOpen: boolean) => void;
+
   // Custom Background
   customBg: string | null;
   setCustomBg: (url: string | null) => void;
@@ -62,6 +70,10 @@ interface AppContextType {
   // Ambient / Auto-Dim Mode
   autoDim: boolean;
   setAutoDim: (enabled: boolean) => void;
+
+  // UI State
+  isSidebarOpen: boolean;
+  setSidebarOpen: (isOpen: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -100,11 +112,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [bgBlur, setBgBlurState] = useState<number>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.BG_BLUR);
-    return saved ? Number(saved) : 0;
+    return saved ? Number(saved) : 8;
   });
 
+  const [geminiKey, setGeminiKey] = useState<string | null>(() => {
+    return localStorage.getItem('mimiryx_gemini_key');
+  });
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOracleOpen, setIsOracleOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [autoDim, setAutoDim] = useState(false);
+  const [autoDim, setAutoDim] = useState(true);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   // Self-Healing Unique ID Generator
   const generateUniqueId = (prefix: string) => {
@@ -435,6 +455,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSoundEnabled,
         searchQuery,
         setSearchQuery,
+        geminiKey,
+        setGeminiKey: (k: string | null) => {
+          setGeminiKey(k);
+          if (k) localStorage.setItem('mimiryx_gemini_key', k);
+          else localStorage.removeItem('mimiryx_gemini_key');
+        },
+        isSettingsOpen,
+        setIsSettingsOpen,
+        isOracleOpen,
+        setIsOracleOpen,
         customBg,
         setCustomBg,
         bgOpacity,
@@ -468,6 +498,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         totalTopicsCount: topics.length,
         autoDim,
         setAutoDim,
+        isSidebarOpen,
+        setSidebarOpen,
       }}
     >
       {children}

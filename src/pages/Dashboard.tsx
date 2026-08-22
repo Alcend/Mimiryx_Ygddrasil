@@ -299,7 +299,7 @@ export const Dashboard: React.FC = () => {
             {/* Telemetry Metrics Section (from Monitor) */}
             {(activeSideTab === 'all' || activeSideTab === 'telemetry') && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between" title="Live system metrics monitoring the health of your knowledge graph">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Server className="w-3 h-3 text-primary" /> Real-Time Telemetry
                   </span>
@@ -313,7 +313,7 @@ export const Dashboard: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   {metrics.slice(0, 4).map((m) => (
-                    <div key={m.id} className="p-2.5 rounded-xl bg-background/50 border border-white/5 flex flex-col justify-between">
+                    <div key={m.id} title={`Current ${m.name}: ${m.value}${m.unit}. Represents system ${m.name.toLowerCase()} overhead.`} className="p-2.5 rounded-xl bg-background/50 border border-white/5 flex flex-col justify-between hover:bg-white/[0.02] transition-colors cursor-help">
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-mono text-muted-foreground truncate">{m.name}</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -333,7 +333,7 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Live Terminal Stream */}
-                <div className="rounded-xl bg-black/80 border border-border/50 p-2.5 space-y-1.5">
+                <div className="rounded-xl bg-black/80 border border-border/50 p-2.5 space-y-1.5 cursor-help" title="Live event stream of AI clustering and system background tasks">
                   <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground border-b border-border/30 pb-1">
                     <span className="flex items-center gap-1 text-emerald-400">
                       <Terminal className="w-3 h-3" /> SYNAPSE STREAM
@@ -354,8 +354,8 @@ export const Dashboard: React.FC = () => {
 
             {/* Knowledge Flow State & Mastery (from Analytics) */}
             {(activeSideTab === 'all' || activeSideTab === 'analytics') && (
-              <div className="space-y-3 pt-2 border-t border-border/40">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 pt-4 border-t border-border/40">
+                <div className="flex items-center justify-between" title="Visual breakdown of your note mastery levels">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <BarChart3 className="w-3 h-3 text-[hsl(var(--neon-blue))]" /> Knowledge Distribution
                   </span>
@@ -367,41 +367,55 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex justify-between text-[11px] font-mono mb-0.5">
-                      <span className="text-[hsl(var(--neon-blue))]">Learning</span>
-                      <span className="text-muted-foreground">{learningNotes} ({Math.round((learningNotes / (totalNotesCount || 1)) * 100)}%)</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-secondary/50 overflow-hidden">
-                      <div className="h-full bg-[hsl(var(--neon-blue))]" style={{ width: `${(learningNotes / (totalNotesCount || 1)) * 100}%` }} />
+                <div className="flex items-center gap-6">
+                  {/* Modern CSS Conic Gradient Donut Chart */}
+                  <div 
+                    className="relative w-24 h-24 shrink-0 rounded-full flex items-center justify-center cursor-help"
+                    title={`Learning: ${learningNotes} | Reviewing: ${reviewingNotes} | Mastered: ${masteredNotes}`}
+                    style={{
+                      background: `conic-gradient(
+                        hsl(var(--neon-blue)) 0% ${(learningNotes / (totalNotesCount || 1)) * 100}%,
+                        hsl(var(--accent)) ${(learningNotes / (totalNotesCount || 1)) * 100}% ${((learningNotes + reviewingNotes) / (totalNotesCount || 1)) * 100}%,
+                        hsl(var(--neon-green)) ${((learningNotes + reviewingNotes) / (totalNotesCount || 1)) * 100}% 100%
+                      )`
+                    }}
+                  >
+                    {/* Inner Cutout (The Donut Hole) */}
+                    <div className="absolute inset-2 bg-[#060b14] rounded-full flex flex-col items-center justify-center border border-white/5">
+                      <span className="text-xl font-bold font-mono text-foreground">{masteryPercentage}%</span>
+                      <span className="text-[8px] uppercase tracking-widest text-muted-foreground">Mastery</span>
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between text-[11px] font-mono mb-0.5">
-                      <span className="text-[hsl(var(--accent))]">Reviewing</span>
-                      <span className="text-muted-foreground">{reviewingNotes} ({Math.round((reviewingNotes / (totalNotesCount || 1)) * 100)}%)</span>
+                  {/* Legend */}
+                  <div className="flex-1 space-y-2.5">
+                    <div className="flex items-center justify-between text-[11px] font-mono cursor-help" title="Notes currently being drafted or actively researched">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[hsl(var(--neon-blue))]" />
+                        <span className="text-muted-foreground hover:text-[hsl(var(--neon-blue))] transition-colors">Learning</span>
+                      </div>
+                      <span className="font-bold text-foreground">{learningNotes}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-secondary/50 overflow-hidden">
-                      <div className="h-full bg-[hsl(var(--accent))]" style={{ width: `${(reviewingNotes / (totalNotesCount || 1)) * 100}%` }} />
+                    <div className="flex items-center justify-between text-[11px] font-mono cursor-help" title="Notes pending memorization or spaced repetition review">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[hsl(var(--accent))]" />
+                        <span className="text-muted-foreground hover:text-[hsl(var(--accent))] transition-colors">Reviewing</span>
+                      </div>
+                      <span className="font-bold text-foreground">{reviewingNotes}</span>
                     </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-[11px] font-mono mb-0.5">
-                      <span className="text-[hsl(var(--neon-green))]">Mastered</span>
-                      <span className="text-muted-foreground">{masteredNotes} ({Math.round((masteredNotes / (totalNotesCount || 1)) * 100)}%)</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-secondary/50 overflow-hidden">
-                      <div className="h-full bg-[hsl(var(--neon-green))]" style={{ width: `${(masteredNotes / (totalNotesCount || 1)) * 100}%` }} />
+                    <div className="flex items-center justify-between text-[11px] font-mono cursor-help" title="Notes fully committed to long-term memory">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[hsl(var(--neon-green))]" />
+                        <span className="text-muted-foreground hover:text-[hsl(var(--neon-green))] transition-colors">Mastered</span>
+                      </div>
+                      <span className="font-bold text-foreground">{masteredNotes}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Progress by Topic list */}
                 <div className="space-y-2 pt-2 border-t border-border/30">
-                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground" title="Granular mastery progress for each active topic">
                     <span>TOPIC PROGRESS</span>
                     <button onClick={() => navigate('/topics')} className="text-primary hover:underline">
                       Manage ({topics.length})
@@ -415,6 +429,7 @@ export const Dashboard: React.FC = () => {
                       return (
                         <div
                           key={topic.id}
+                          title={`Click to manage ${topic.name}. ${mNotes} of ${tNotes.length} notes mastered.`}
                           onClick={() => { sounds.playClick(); navigate(`/topics/${topic.id}`); }}
                           className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-border/30 cursor-pointer space-y-1 transition-colors"
                         >
@@ -432,7 +447,10 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Streak Badge */}
-                <div className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--neon-green)/0.3)] bg-[hsl(var(--neon-green)/0.06)]">
+                <div 
+                  className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--neon-green)/0.3)] bg-[hsl(var(--neon-green)/0.06)] cursor-help"
+                  title="Daily consistency streak. You have added or reviewed notes for 14 consecutive days!"
+                >
                   <div className="flex items-center gap-2">
                     <Flame className="w-5 h-5 text-[hsl(var(--neon-green))] animate-pulse" />
                     <div>

@@ -3,11 +3,14 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useApp } from '../context/AppContext';
+import { DigitalVinesFrame } from './DigitalVinesFrame';
+import { SettingsModal } from './SettingsModal';
+import { OracleChat } from './OracleChat';
 import { Eye } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 export const Layout: React.FC = () => {
-  const { customBg, bgOpacity, bgBlur, autoDim } = useApp();
+  const { customBg, bgOpacity, bgBlur, autoDim, isSidebarOpen } = useApp();
   const [isIdle, setIsIdle] = useState(false);
 
   // Auto-Dim ambient logic
@@ -69,9 +72,9 @@ export const Layout: React.FC = () => {
 
       {/* Sidebar & Shell */}
       <div
-        className={`shrink-0 w-64 transition-all duration-700 ease-in-out hover:opacity-100 ${
-          isIdle ? 'opacity-10' : 'opacity-100'
-        }`}
+        className={`shrink-0 transition-all duration-700 ease-in-out hover:opacity-100 ${
+          isSidebarOpen ? 'w-64' : 'w-0'
+        } ${isIdle && isSidebarOpen ? 'opacity-10' : 'opacity-100'} overflow-hidden`}
       >
         <Sidebar />
       </div>
@@ -86,10 +89,17 @@ export const Layout: React.FC = () => {
         </div>
         
         {/* Pass isIdle to Outlet context so Dashboard can read it if needed, or we just handle it globally */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 transition-all duration-700">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 transition-all duration-700 w-full max-w-[1700px] mx-auto">
           <Outlet context={{ isIdle }} />
         </main>
       </div>
+      
+      {/* Decorative ultra-wide frame */}
+      <DigitalVinesFrame />
+      
+      {/* Global Overlays */}
+      <OracleChat />
+      <SettingsModal />
     </div>
   );
 };

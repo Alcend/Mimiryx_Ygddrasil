@@ -245,8 +245,8 @@ export const YggdrasilWorldTreeCanvas: React.FC = () => {
     prevIds.current = cur;
   }, [topics, notes, labs]);
 
-  // Camera coordinates (centered nicely on the tree)
-  const cam = useRef<Cam>({ x: 0, y: 35, zoom: 0.68, tx: 0, ty: 35, tz: 0.68 });
+  // Fluid Camera Engine (Smooth pan/zoom via lerp)
+  const cam = useRef<Cam>({ x: 0, y: 35, zoom: 0.55, tx: 0, ty: 35, tz: 0.55 });
 
   // ── Build Tree Hierarchy with Curved Bézier Geometry ──
   const treeNodes = useMemo(() => {
@@ -676,8 +676,7 @@ export const YggdrasilWorldTreeCanvas: React.FC = () => {
           ctx.strokeStyle = color;
           ctx.lineWidth = w;
           if (blur > 0) {
-            ctx.shadowColor = color.replace(/[\d.]+\)$/, '1)');
-            ctx.shadowBlur = blur;
+            ctx.shadowBlur = 0; // Disabled for performance
           }
           ctx.stroke();
         };
@@ -806,8 +805,8 @@ export const YggdrasilWorldTreeCanvas: React.FC = () => {
           ctx.strokeStyle = colorStr;
           ctx.lineWidth = node.thickness * widthMult;
           if (blur > 0) {
-            ctx.shadowColor = colorStr.replace(/[\d.]+\)$/, '1)'); // make shadow solid
-            ctx.shadowBlur = blur;
+            // Disabled shadowBlur for massive FPS gain. We rely on wide low-opacity strokes instead.
+            ctx.shadowBlur = 0;
           } else {
             ctx.shadowBlur = 0;
           }
@@ -1075,11 +1074,12 @@ export const YggdrasilWorldTreeCanvas: React.FC = () => {
     sounds.playClick();
     cam.current.tx = 0;
     cam.current.ty = 35;
-    cam.current.tz = 0.68;
+    cam.current.tz = 0.55;
+    setPinnedBranch(null);
   };
 
   return (
-    <div className={`relative w-full h-[620px] lg:h-[660px] overflow-hidden rounded-2xl select-none transition-colors duration-700 ${
+    <div className={`relative w-full h-[450px] lg:h-[520px] overflow-hidden rounded-2xl select-none transition-colors duration-700 ${
       isIdle 
         ? 'bg-transparent border-transparent shadow-none' 
         : 'border border-primary/30 cyber-card shadow-2xl bg-[#030810]'
@@ -1161,9 +1161,9 @@ export const YggdrasilWorldTreeCanvas: React.FC = () => {
       {/* Floating Hover Popover HUD (Follows cursor smoothly) */}
       {hoverHUD && !pinnedBranch && (
         <div
-          className="absolute z-30 pointer-events-none p-3.5 rounded-xl bg-black/90 backdrop-blur-md border shadow-2xl max-w-xs space-y-2 animate-in fade-in zoom-in-95 duration-100"
+          className="absolute z-40 pointer-events-none p-3.5 rounded-xl bg-black/90 backdrop-blur-md border shadow-2xl max-w-xs space-y-2 animate-in fade-in zoom-in-95 duration-100"
           style={{
-            left: Math.min(window.innerWidth - 320, Math.max(16, hoverHUD.x + 18)),
+            left: hoverHUD.x > 500 ? hoverHUD.x - 300 : hoverHUD.x + 18,
             top: Math.min(520, Math.max(16, hoverHUD.y - 40)),
             borderColor: `${hoverHUD.color}66`,
             boxShadow: `0 8px 30px rgba(0,0,0,0.8), 0 0 15px ${hoverHUD.color}22`,
@@ -1226,7 +1226,7 @@ export const YggdrasilWorldTreeCanvas: React.FC = () => {
 
       {/* Pinned Branch Inspector Modal (Locks open when clicked until closed) */}
       {pinnedBranch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 animate-in fade-in duration-150">
           <div className="bg-card border border-primary/50 rounded-2xl p-6 w-full max-w-lg cyber-card space-y-4 shadow-2xl animate-in zoom-in-95 duration-150 bg-[#070e17]">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-border/60 pb-3">

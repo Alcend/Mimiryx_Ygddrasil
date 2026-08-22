@@ -17,13 +17,16 @@ import {
   FileText,
   Tag,
   Eye,
+  Brain,
+  Loader2,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { BookReader } from '../components/BookReader';
+import { getNoteExpandPrompt, generateGeminiResponse } from '../utils/ai';
 
 export const NoteDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { notes, topics, updateNote, deleteNote } = useApp();
+  const { notes, topics, updateNote, deleteNote, geminiKey, setIsSettingsOpen } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -108,6 +111,32 @@ export const NoteDetailPage: React.FC = () => {
     sounds.playSuccess();
   };
 
+  const [isExpanding, setIsExpanding] = useState(false);
+
+  const handleAIExpand = async () => {
+    if (isExpanding) return;
+    sounds.playClick();
+    
+    if (!geminiKey) {
+      setIsSettingsOpen(true);
+      return;
+    }
+
+    setIsExpanding(true);
+    try {
+      const prompt = getNoteExpandPrompt(title, content);
+      const expandedText = await generateGeminiResponse(prompt, geminiKey);
+      
+      setContent(prev => prev + '\n\n' + expandedText);
+      sounds.playSuccess();
+    } catch (error: any) {
+      sounds.playError();
+      alert(`AI Expand Failed: ${error.message}`);
+    } finally {
+      setIsExpanding(false);
+    }
+  };
+
   const handleDelete = () => {
     deleteNote(note.id);
     navigate('/notes');
@@ -169,13 +198,25 @@ export const NoteDetailPage: React.FC = () => {
         <div className="p-6 md:p-8 rounded-2xl cyber-card border border-primary/30 space-y-5 bg-[#070e17]">
           <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <div className="flex items-center gap-2">
-              <Edit3 className="w-4 h-4 text-primary" />
-              <h3 className="font-heading text-sm font-bold text-foreground">
-                Editing Knowledge Record // Multi-Page Mode
-              </h3>
+              <FileText className="w-4 h-4 text-primary" />
+              <span className="font-heading font-bold text-foreground">Editing Knowledge Record</span>
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleAIExpand}
+                disabled={isExpanding}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-mono flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(0,224,255,0.15)] ${
+                  isExpanding
+                    ? 'bg-primary/5 border-primary/20 text-primary/50 cursor-wait'
+                    : 'bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 hover:shadow-[0_0_20px_rgba(0,224,255,0.3)]'
+                }`}
+                title="Use Neural AI to expand on your current content"
+              >
+                {isExpanding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Brain className="w-3.5 h-3.5 animate-pulse" />}
+                {isExpanding ? 'Synthesizing...' : 'AI Expand'}
+              </button>
+
               <button
                 onClick={handleAutoOrganize}
                 disabled={isFormatting}
