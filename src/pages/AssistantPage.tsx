@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Bug, Send, Sparkles, Terminal, CheckCircle2 } from 'lucide-react';
+import { Bug, Send, Sparkles } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 export const AssistantPage: React.FC = () => {

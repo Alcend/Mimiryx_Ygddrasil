@@ -145,6 +145,63 @@ class SoundEngine {
       osc.stop(now + 0.25);
     } catch {}
   }
+
+  private droneOsc1: OscillatorNode | null = null;
+  private droneOsc2: OscillatorNode | null = null;
+  private droneGain: GainNode | null = null;
+
+  public playFocusDrone() {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      
+      this.stopFocusDrone(); // clear existing
+
+      const now = this.ctx.currentTime;
+      
+      // Soft Ambient Pad (A2 + E3 Perfect Fifth)
+      this.droneOsc1 = this.ctx.createOscillator();
+      this.droneOsc1.type = 'sine';
+      this.droneOsc1.frequency.setValueAtTime(110, now); // A2
+
+      this.droneOsc2 = this.ctx.createOscillator();
+      this.droneOsc2.type = 'sine'; // Removed triangle (too buzzy)
+      this.droneOsc2.frequency.setValueAtTime(164.81, now); // E3 (Perfect fifth, no vibrating detune)
+
+      // Very soft lowpass filter
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(250, now);
+
+      this.droneGain = this.ctx.createGain();
+      this.droneGain.gain.setValueAtTime(0, now);
+      // Drastically reduced volume (from 0.3 to 0.02) to make it a subtle, soothing background atmosphere
+      this.droneGain.gain.linearRampToValueAtTime(0.02, now + 3);
+
+      this.droneOsc1.connect(filter);
+      this.droneOsc2.connect(filter);
+      filter.connect(this.droneGain);
+      this.droneGain.connect(this.ctx.destination);
+
+      this.droneOsc1.start();
+      this.droneOsc2.start();
+    } catch {}
+  }
+
+  public stopFocusDrone() {
+    if (!this.droneGain || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      this.droneGain.gain.linearRampToValueAtTime(0, now + 2); // fade out over 2 seconds
+      setTimeout(() => {
+        if (this.droneOsc1) { this.droneOsc1.stop(); this.droneOsc1.disconnect(); this.droneOsc1 = null; }
+        if (this.droneOsc2) { this.droneOsc2.stop(); this.droneOsc2.disconnect(); this.droneOsc2 = null; }
+        if (this.droneGain) { this.droneGain.disconnect(); this.droneGain = null; }
+      }, 2100);
+    } catch {}
+  }
 }
 
 export const sounds = new SoundEngine();

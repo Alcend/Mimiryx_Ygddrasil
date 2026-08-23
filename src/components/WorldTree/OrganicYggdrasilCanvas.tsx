@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { generateOrganicFractalTree, OrganicTreeLayout, FractalBranch, FractalRoot } from './organicFractalEngine';
-import { Lock, Unlock, RotateCcw, Plus, Minus, Search, Sparkles, BookOpen, X, Play, Sliders } from 'lucide-react';
+import { generateOrganicFractalTree } from './organicFractalEngine';
+import { Lock, Unlock, RotateCcw, Plus, Minus, BookOpen, X } from 'lucide-react';
 import { sounds } from '../../utils/audio';
 import { useNavigate } from 'react-router-dom';
 

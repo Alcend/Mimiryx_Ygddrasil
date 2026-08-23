@@ -352,11 +352,11 @@ export function generateVolumetricTree(
   });
 
   // Stats
-  let masteredCount = notes.filter(n => n.status === 'mastered').length + labs.filter(l => l.status === 'completed').length;
-  let reviewingCount = notes.filter(n => n.status === 'reviewing').length;
-  let learningCount = notes.filter(n => n.status === 'learning').length;
-  let totalItems = notes.length + labs.length || 1;
-  let growthPercentage = Math.round((masteredCount / totalItems) * 100);
+  const masteredCount = notes.filter(n => n.status === 'mastered').length + labs.filter(l => l.status === 'completed').length;
+  const reviewingCount = notes.filter(n => n.status === 'reviewing').length;
+  const learningCount = notes.filter(n => n.status === 'learning').length;
+  const totalItems = notes.length + labs.length || 1;
+  const growthPercentage = Math.round((masteredCount / totalItems) * 100);
 
   return {
     trunkCables,

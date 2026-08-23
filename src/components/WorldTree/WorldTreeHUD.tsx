@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Minus, RotateCcw, Lock, Unlock, Search, Sparkles, Activity, Layers } from 'lucide-react';
+import { Plus, Minus, RotateCcw, Lock, Unlock, Search, Layers } from 'lucide-react';
 import { TreeData, Camera } from './types';
 import { sounds } from '../../utils/audio';
 

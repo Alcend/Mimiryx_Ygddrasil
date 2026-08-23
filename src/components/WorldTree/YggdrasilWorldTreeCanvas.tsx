@@ -17,7 +17,7 @@
 
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Topic, Note, Lab } from '../../types';
+import { Topic, Note } from '../../types';
 import {
   Lock,
   Unlock,
@@ -26,11 +26,7 @@ import {
   Minus,
   X,
   BookOpen,
-  FlaskConical,
   ArrowRight,
-  Sparkles,
-  Layers,
-  CheckCircle2,
   Sun,
 } from 'lucide-react';
 import { sounds } from '../../utils/audio';
@@ -219,8 +215,21 @@ function generateRecursiveCluster(
   }
 }
 
-export const YggdrasilWorldTreeCanvas: React.FC = () => {
-  const { topics, notes, labs, customBg } = useApp();
+export const YggdrasilWorldTreeCanvas: React.FC<{ activeRealm?: string | null }> = ({ activeRealm }) => {
+  const { topics: allTopics, notes: allNotes, labs, customBg } = useApp();
+
+  // Filter by Realm if specified
+  const topics = useMemo(() => {
+    if (!activeRealm || activeRealm === 'ALL') return allTopics;
+    return allTopics.filter(t => t.category === activeRealm);
+  }, [allTopics, activeRealm]);
+
+  const notes = useMemo(() => {
+    if (!activeRealm || activeRealm === 'ALL') return allNotes;
+    const realmTopicIds = new Set(topics.map(t => t.id));
+    return allNotes.filter(n => realmTopicIds.has(n.topicId));
+  }, [allNotes, topics, activeRealm]);
+
   const { isIdle } = useOutletContext<{ isIdle: boolean }>() || { isIdle: false };
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

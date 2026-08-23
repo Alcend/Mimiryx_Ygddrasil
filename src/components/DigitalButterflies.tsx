@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Sparkles, BrainCircuit, CheckCircle2, Share2 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
@@ -82,7 +82,7 @@ export const DigitalButterflies: React.FC<DigitalButterfliesProps> = ({ triviaPo
         // Calculate rotation pointing to next waypoint
         const dx = nextX - currX;
         const dy = nextY - currY;
-        let targetRot = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        const targetRot = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
 
         // Prevent 360 snap spinning
         if (step > 0) {

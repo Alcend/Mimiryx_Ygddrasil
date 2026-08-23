@@ -1,34 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { Note, NoteDifficulty, NoteStatus, Topic } from '../types';
+import { Note, NoteDifficulty, Topic } from '../types';
 import { Link } from 'react-router-dom';
 import {
   Plus,
   Search,
-  Filter,
   Trash2,
   Edit2,
   Edit3,
   BookOpen,
-  Tag,
-  Calendar,
   Upload,
-  Layers,
-  Sparkles,
   BookMarked,
   ArrowRight,
-  Eye,
   X,
-  RotateCw,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
-  FileText,
-  Boxes,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { ImportExportModal } from '../components/ImportExportModal';
-import { BookReader, chunkNoteIntoPages } from '../components/BookReader';
+
 
 /**
  * Universal Topic Resolver:
@@ -257,9 +247,9 @@ export const NotesPage: React.FC = () => {
             }}
             className="px-3 py-2 bg-background/80 border border-border rounded-xl text-xs font-mono text-foreground focus:outline-none focus:border-primary cursor-pointer hover:border-primary/50 transition-colors"
           >
-            <option value="all">All Topics ({notes.length} records)</option>
+            <option className="bg-[#0b101a] text-white" value="all">All Topics ({notes.length} records)</option>
             {topics.map((t) => (
-              <option key={t.id} value={t.id}>
+              <option className="bg-[#0b101a] text-white" key={t.id} value={t.id}>
                 {t.name} ({topicCounts[t.id] || 0})
               </option>
             ))}
@@ -276,10 +266,10 @@ export const NotesPage: React.FC = () => {
             }}
             className="px-3 py-2 bg-background/80 border border-border rounded-xl text-xs font-mono text-foreground focus:outline-none focus:border-primary cursor-pointer hover:border-primary/50 transition-colors"
           >
-            <option value="all">All Statuses</option>
-            <option value="learning">Learning</option>
-            <option value="reviewing">Reviewing</option>
-            <option value="mastered">Mastered</option>
+            <option className="bg-[#0b101a] text-white" value="all">All Statuses</option>
+            <option className="bg-[#0b101a] text-white" value="learning">Learning</option>
+            <option className="bg-[#0b101a] text-white" value="reviewing">Reviewing</option>
+            <option className="bg-[#0b101a] text-white" value="mastered">Mastered</option>
           </select>
         </div>
 
@@ -293,10 +283,10 @@ export const NotesPage: React.FC = () => {
             }}
             className="px-3 py-2 bg-background/80 border border-border rounded-xl text-xs font-mono text-foreground focus:outline-none focus:border-primary cursor-pointer hover:border-primary/50 transition-colors"
           >
-            <option value="all">All Difficulties</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
+            <option className="bg-[#0b101a] text-white" value="all">All Difficulties</option>
+            <option className="bg-[#0b101a] text-white" value="beginner">Beginner</option>
+            <option className="bg-[#0b101a] text-white" value="intermediate">Intermediate</option>
+            <option className="bg-[#0b101a] text-white" value="advanced">Advanced</option>
           </select>
         </div>
 
@@ -341,13 +331,12 @@ export const NotesPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredNotes.map((note) => {
             const topic = resolveNoteTopic(note, topics);
-            const pages = chunkNoteIntoPages(note.content, note.title);
-            const pageCount = pages.length;
+            const pageCount = Math.max(1, Math.ceil(note.content.split('---').length));
             const isFlipped = flippedCards[note.id] !== undefined;
             const currentBackPageNum = flippedCards[note.id] || 1;
-            const currentBackPage = pages[currentBackPageNum - 1] || pages[0];
-
-            const cleanContent = currentBackPage.content.replace(/^#+\s+[^\n]+\n*/, '').trim();
+            const contentChunks = note.content.split('---');
+            const rawContent = contentChunks[currentBackPageNum - 1] || note.content;
+            const cleanContent = rawContent.replace(/^#+\s+[^\n]+\n*/, '').trim();
 
             return (
               <div
@@ -430,7 +419,7 @@ export const NotesPage: React.FC = () => {
                             title="Re-assign to another topic"
                           >
                             {topics.map(t => (
-                              <option key={t.id} value={t.id}>{t.name}</option>
+                              <option className="bg-[#0b101a] text-white" key={t.id} value={t.id}>{t.name}</option>
                             ))}
                           </select>
                           <div
@@ -507,13 +496,13 @@ export const NotesPage: React.FC = () => {
                       <div className="flex items-center justify-between border-b border-border/60 pb-2 mb-2 shrink-0">
                         <div className="flex items-center gap-1.5 text-[10px] font-mono text-primary font-bold">
                           <BookMarked className="w-3.5 h-3.5" />
-                          <span>PAGE {currentBackPage.pageNumber} OF {pages.length}</span>
+                          <span>PAGE {currentBackPageNum} OF {pageCount}</span>
                         </div>
                       </div>
 
                       {/* Current Page Chapter Title */}
                       <h4 className="text-xs font-heading font-bold text-foreground truncate shrink-0">
-                        {currentBackPage.title}
+                        {note.title} (Part {currentBackPageNum})
                       </h4>
 
                       {/* Summarized Chapter Content */}
@@ -609,7 +598,7 @@ export const NotesPage: React.FC = () => {
                     className="w-full mt-1 p-2 rounded-lg bg-background border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   >
                     {topics.map((t) => (
-                      <option key={t.id} value={t.id}>
+                      <option className="bg-[#0b101a] text-white" key={t.id} value={t.id}>
                         {t.name}
                       </option>
                     ))}
@@ -623,9 +612,9 @@ export const NotesPage: React.FC = () => {
                     onChange={(e) => setNewDifficulty(e.target.value as NoteDifficulty)}
                     className="w-full mt-1 p-2 rounded-lg bg-background border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   >
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
+                    <option className="bg-[#0b101a] text-white" value="beginner">Beginner</option>
+                    <option className="bg-[#0b101a] text-white" value="intermediate">Intermediate</option>
+                    <option className="bg-[#0b101a] text-white" value="advanced">Advanced</option>
                   </select>
                 </div>
               </div>

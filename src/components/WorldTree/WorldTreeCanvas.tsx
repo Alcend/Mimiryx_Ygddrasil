@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { TreeNode, TreeData, Camera } from './types';
 import { buildTreeLayout } from './treeLayoutEngine';
 import { useApp } from '../../context/AppContext';

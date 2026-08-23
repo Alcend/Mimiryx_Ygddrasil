@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { Link } from 'react-router-dom';
-import { Terminal, Clock, CheckCircle2, Play, Sparkles } from 'lucide-react';
+import { Terminal, Clock, Play } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 export const LabsPage: React.FC = () => {

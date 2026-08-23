@@ -1,6 +1,6 @@
 import React from 'react';
 import { TreeNode } from './types';
-import { X, ArrowRight, BookOpen, Terminal, Sparkles, Tag, Layers } from 'lucide-react';
+import { X, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sounds } from '../../utils/audio';
 

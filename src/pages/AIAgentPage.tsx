@@ -3,17 +3,9 @@ import { useApp } from '../context/AppContext';
 import {
   Sparkles,
   Send,
-  Bot,
-  Database,
-  Zap,
   UploadCloud,
   FolderTree,
-  Tag,
-  CheckCircle2,
   BrainCircuit,
-  Boxes,
-  BookOpen,
-  ArrowRight,
   Terminal,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Compass, ArrowRight, Layers, Brain, Radio, Server, Shield } from 'lucide-react';
-import { sounds } from '../utils/audio';
+import { Compass, Layers, Brain, Radio, Server, Shield } from 'lucide-react';
 
 const JOURNEY_STAGES = [
   {

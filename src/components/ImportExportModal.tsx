@@ -6,17 +6,12 @@ import {
   FileText,
   Sparkles,
   CheckCircle2,
-  AlertCircle,
   X,
   Bot,
   Terminal,
-  Layers,
-  Tag,
-  ArrowRight,
   FolderPlus,
   RefreshCw,
   FileCode,
-  Check,
   AlertTriangle,
   Trash2,
 } from 'lucide-react';
@@ -26,7 +21,6 @@ import {
   exportVaultJSON,
   exportNotesMarkdown,
   AIOrganizeResult,
-  ParsedDocument,
 } from '../utils/aiOrganizer';
 
 interface ImportExportModalProps {
@@ -42,6 +36,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, on
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [organizeResult, setOrganizeResult] = useState<AIOrganizeResult | null>(null);
+  const [vaultBackupResult, setVaultBackupResult] = useState<{ topics: any[]; notes: any[] } | null>(null);
   const [importedSuccessCount, setImportedSuccessCount] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -52,10 +47,28 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, on
     sounds.playClick();
     setIsProcessing(true);
     setOrganizeResult(null);
+    setVaultBackupResult(null);
     setImportedSuccessCount(null);
 
     try {
       const fileArr = Array.from(files);
+      
+      // Fast-path for Vault JSON Backups
+      if (fileArr.length === 1 && fileArr[0].name.endsWith('.json')) {
+        try {
+          const text = await fileArr[0].text();
+          const parsed = JSON.parse(text);
+          if (parsed && Array.isArray(parsed.topics) && Array.isArray(parsed.notes)) {
+             setVaultBackupResult({ topics: parsed.topics, notes: parsed.notes });
+             sounds.playSuccess();
+             setIsProcessing(false);
+             return;
+          }
+        } catch (e) {
+          // Fallback to AI parsing if not a valid vault
+        }
+      }
+
       const result = await organizeImportedFiles(fileArr, topics);
       setOrganizeResult(result);
       sounds.playSuccess();
@@ -65,22 +78,24 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, on
       setIsProcessing(false);
     }
   };
+  
+  const handleApplyVaultBackup = () => {
+    if (!vaultBackupResult) return;
+    sounds.playSuccess();
+    importVaultData(vaultBackupResult.topics, vaultBackupResult.notes);
+    setImportedSuccessCount(vaultBackupResult.notes.length);
+    setVaultBackupResult(null);
+  };
 
   const handleApplyAI = () => {
     if (!organizeResult) return;
+    if (organizeResult.documents.some(d => !d.matchedTopicId)) {
+       // Should be blocked by disabled button anyway
+       return;
+    }
     sounds.playSuccess();
 
-    // 1. Prepare new topics
-    const newTopicsPayload = organizeResult.newTopicsToCreate.map((newTop) => ({
-      name: newTop.name,
-      code: newTop.code,
-      category: newTop.category,
-      description: newTop.description,
-      icon: 'Boxes' as const,
-      color: newTop.color,
-    }));
-
-    // 2. Prepare notes payload
+    const newTopicsPayload: any[] = []; // No longer auto-creating topics from bulk import
     const newNotesPayload = organizeResult.documents.map((doc) => ({
       title: doc.title,
       summary: doc.summary || doc.title,

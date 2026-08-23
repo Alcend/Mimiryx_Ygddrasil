@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ThemeMode, Topic, Note, Lab, BoardCard, SystemMetric, ActivityLog, NoteStatus, LabStatus } from '../types';
+import { ThemeMode, Realm, Topic, Note, Lab, BoardCard, SystemMetric, ActivityLog, LabStatus } from '../types';
 import { SEED_TOPICS, SEED_NOTES, SEED_LABS, SEED_BOARD_CARDS, SEED_METRICS } from '../data/seedData';
 import { sounds } from '../utils/audio';
+import localforage from 'localforage';
+import { Sparkles } from 'lucide-react';
 
 interface AppContextType {
   theme: ThemeMode;
@@ -27,6 +29,12 @@ interface AppContextType {
   bgBlur: number;
   setBgBlur: (val: number) => void;
   
+  // Realms
+  realms: Realm[];
+  addRealm: (realm: Omit<Realm, 'id' | 'order' | 'createdAt' | 'updatedAt'>) => Realm;
+  updateRealm: (id: string, updates: Partial<Realm>) => void;
+  deleteRealm: (id: string) => void;
+
   // Topics
   topics: Topic[];
   addTopic: (topic: Omit<Topic, 'id' | 'order'>) => Topic;
@@ -85,6 +93,7 @@ const STORAGE_KEYS = {
   BG_OPACITY: 'mimiryx:bg_opacity',
   BG_BLUR: 'mimiryx:bg_blur',
   TOPICS: 'mimiryx:topics',
+  REALMS: 'mimiryx:realms',
   NOTES: 'mimiryx:notes',
   LABS: 'mimiryx:labs',
   BOARD: 'mimiryx:board',
@@ -131,55 +140,121 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   };
 
-  const [topics, setTopics] = useState<Topic[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.TOPICS);
-    let parsed: Topic[] = saved ? JSON.parse(saved) : SEED_TOPICS;
-    
-    // Deduplicate IDs
-    const seenIds = new Set<string>();
-    parsed = parsed.map(t => {
-      let id = t.id;
-      if (seenIds.has(id)) id = generateUniqueId('topic');
-      seenIds.add(id);
-      return { ...t, id };
-    });
-    return parsed;
-  });
-
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.NOTES);
-    let parsed: Note[] = saved ? JSON.parse(saved) : SEED_NOTES;
-    
-    // Deduplicate IDs
-    const seenIds = new Set<string>();
-    parsed = parsed.map(n => {
-      let id = n.id;
-      if (seenIds.has(id)) id = generateUniqueId('note');
-      seenIds.add(id);
-      return { ...n, id };
-    });
-    return parsed;
-  });
-
-  const [labs, setLabs] = useState<Lab[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.LABS);
-    return saved ? JSON.parse(saved) : SEED_LABS;
-  });
-
-  const [boardCards, setBoardCards] = useState<BoardCard[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.BOARD);
-    return saved ? JSON.parse(saved) : SEED_BOARD_CARDS;
-  });
-
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [realms, setRealms] = useState<Realm[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [labs, setLabs] = useState<Lab[]>([]);
+  const [boardCards, setBoardCards] = useState<BoardCard[]>([]);
   const [metrics, setMetrics] = useState<SystemMetric[]>(SEED_METRICS);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
 
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.LOGS);
-    return saved ? JSON.parse(saved) : [
-      { id: 'log-1', timestamp: new Date(Date.now() - 3600000).toLocaleTimeString(), action: 'Initialized', target: 'MIMIRYX Neural Engine', type: 'mastery' },
-      { id: 'log-2', timestamp: new Date(Date.now() - 1800000).toLocaleTimeString(), action: 'Knowledge Synced', target: '4 Topics Loaded', type: 'topic' }
-    ];
-  });
+  // Deduplicate IDs safely
+  const deduplicateIds = <T extends { id: string }>(items: T[], prefix: string): T[] => {
+    const seen = new Set<string>();
+    return items.map(item => {
+      let id = item.id;
+      if (seen.has(id)) id = generateUniqueId(prefix);
+      seen.add(id);
+      return { ...item, id };
+    });
+  };
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [savedRealms, savedTopics, savedNotes, savedLabs, savedBoard, savedLogs] = await Promise.all([
+          localforage.getItem<Realm[]>(STORAGE_KEYS.REALMS),
+          localforage.getItem<Topic[]>(STORAGE_KEYS.TOPICS),
+          localforage.getItem<Note[]>(STORAGE_KEYS.NOTES),
+          localforage.getItem<Lab[]>(STORAGE_KEYS.LABS),
+          localforage.getItem<BoardCard[]>(STORAGE_KEYS.BOARD),
+          localforage.getItem<ActivityLog[]>(STORAGE_KEYS.LOGS),
+        ]);
+
+        let finalRealms = savedRealms || [];
+        let finalTopics = savedTopics ? deduplicateIds(savedTopics, 'topic') : SEED_TOPICS;
+
+        if (finalTopics.length > 0 && finalRealms.length === 0) {
+          const generatedRealms: Realm[] = [];
+          finalTopics.forEach(t => {
+            if (t.category && !generatedRealms.find(r => r.name.toLowerCase() === t.category.toLowerCase())) {
+              generatedRealms.push({
+                id: generateUniqueId('realm'),
+                name: t.category,
+                color: t.color || '#00f0ff',
+                order: generatedRealms.length,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+            }
+          });
+          finalRealms = generatedRealms;
+          
+          finalTopics = finalTopics.map(t => {
+             const matchedRealm = finalRealms.find(r => r.name.toLowerCase() === (t.category || '').toLowerCase());
+             return { ...t, realmId: matchedRealm?.id || '' };
+          });
+          
+          await localforage.setItem(STORAGE_KEYS.REALMS, finalRealms);
+          await localforage.setItem(STORAGE_KEYS.TOPICS, finalTopics);
+        }
+
+        setRealms(finalRealms);
+        setTopics(finalTopics);
+        setNotes(savedNotes ? deduplicateIds(savedNotes, 'note') : SEED_NOTES);
+        setLabs(savedLabs || SEED_LABS);
+        setBoardCards(savedBoard || SEED_BOARD_CARDS);
+        setActivityLogs(savedLogs || [
+          { id: 'log-1', timestamp: new Date(Date.now() - 3600000).toLocaleTimeString(), action: 'Initialized', target: 'MIMIRYX Neural Engine', type: 'mastery' },
+          { id: 'log-2', timestamp: new Date(Date.now() - 1800000).toLocaleTimeString(), action: 'Knowledge Synced', target: '4 Topics Loaded', type: 'topic' }
+        ]);
+      } catch (err) {
+        console.error("Failed to load localforage data", err);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Debounced Save Hooks to prevent UI blocking
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const timer = setTimeout(() => localforage.setItem(STORAGE_KEYS.REALMS, realms), 500);
+    return () => clearTimeout(timer);
+  }, [realms, isDataLoaded]);
+
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const timer = setTimeout(() => localforage.setItem(STORAGE_KEYS.TOPICS, topics), 500);
+    return () => clearTimeout(timer);
+  }, [topics, isDataLoaded]);
+
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const timer = setTimeout(() => localforage.setItem(STORAGE_KEYS.NOTES, notes), 500);
+    return () => clearTimeout(timer);
+  }, [notes, isDataLoaded]);
+
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const timer = setTimeout(() => localforage.setItem(STORAGE_KEYS.LABS, labs), 500);
+    return () => clearTimeout(timer);
+  }, [labs, isDataLoaded]);
+
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const timer = setTimeout(() => localforage.setItem(STORAGE_KEYS.BOARD, boardCards), 500);
+    return () => clearTimeout(timer);
+  }, [boardCards, isDataLoaded]);
+
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const timer = setTimeout(() => localforage.setItem(STORAGE_KEYS.LOGS, activityLogs), 500);
+    return () => clearTimeout(timer);
+  }, [activityLogs, isDataLoaded]);
+
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -209,12 +284,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setBgBlurState(val);
     localStorage.setItem(STORAGE_KEYS.BG_BLUR, String(val));
   };
-
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.TOPICS, JSON.stringify(topics)); }, [topics]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes)); }, [notes]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.LABS, JSON.stringify(labs)); }, [labs]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.BOARD, JSON.stringify(boardCards)); }, [boardCards]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(activityLogs)); }, [activityLogs]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -249,6 +318,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
 
+
+
+  const addRealm = (realmData: Omit<Realm, 'id' | 'order' | 'createdAt' | 'updatedAt'>): Realm => {
+    sounds.playSuccess();
+    const newRealm: Realm = {
+      ...realmData,
+      id: generateUniqueId('realm'),
+      order: realms.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setRealms(prev => [...prev, newRealm]);
+    addActivity('Created Realm', newRealm.name, 'topic');
+    return newRealm;
+  };
+
+  const updateRealm = (id: string, updates: Partial<Realm>) => {
+    setRealms(prev => prev.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
+  };
+
+  const deleteRealm = (id: string) => {
+    sounds.playClick();
+    setRealms(prev => prev.filter(r => r.id !== id));
+    // Also delete all topics tied to this realm? Or re-assign them. For now, leave orphaned or delete.
+  };
 
   const addTopic = (topicData: Omit<Topic, 'id' | 'order'>): Topic => {
     sounds.playSuccess();
@@ -446,10 +540,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const totalItems = (notes.length + labs.length) || 1;
   const masteryPercentage = Math.round(((masteredNotes + completedLabs) / totalItems) * 100);
 
+  if (!isDataLoaded) {
+    return (
+      <div className="min-h-screen bg-[#02050A] flex flex-col items-center justify-center font-mono text-primary">
+        <Sparkles className="w-8 h-8 animate-pulse mb-4 text-emerald-400" />
+        <h2 className="text-sm font-bold tracking-widest text-emerald-400">INITIALIZING NEURAL ENGINE...</h2>
+        <p className="text-[10px] text-muted-foreground mt-2">Loading synapses from local IndexedDB...</p>
+      </div>
+    );
+  }
+
   return (
     <AppContext.Provider
       value={{
         theme,
+        realms,
+        addRealm,
+        updateRealm,
+        deleteRealm,
         setTheme,
         soundEnabled,
         setSoundEnabled,

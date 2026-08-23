@@ -1,28 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Note, Topic, NoteStatus, NoteDifficulty } from '../types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { Note, Topic, NoteStatus } from '../types';
 import { useApp } from '../context/AppContext';
 import {
-  ChevronLeft,
-  ChevronRight,
-  BookOpen,
   Bookmark,
   Sparkles,
-  Layers,
   Copy,
   Check,
-  Edit3,
   List,
-  Maximize2,
-  Minimize2,
   CheckCircle2,
-  Clock,
-  Flame,
-  FileText,
   CornerDownRight,
   BookMarked,
-  Sliders,
   Type,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  BrainCircuit,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { sounds } from '../utils/audio';
@@ -33,118 +31,96 @@ interface BookReaderProps {
   onEdit: () => void;
 }
 
-export interface NotePageItem {
-  pageNumber: number;
-  title: string;
-  content: string;
-  wordCount: number;
-}
-
-/**
- * Intelligent Multi-Page Chunker:
- * Splits long notes/subtopics into digestible, comfortable book pages
- * based on explicit pagebreaks, headers, or length limits.
- */
-export function chunkNoteIntoPages(content: string, noteTitle: string): NotePageItem[] {
-  if (!content || !content.trim()) {
-    return [{ pageNumber: 1, title: noteTitle, content: 'No content documented yet.', wordCount: 4 }];
-  }
-
-  // 1. Check for explicit pagebreaks (--- or <!-- pagebreak -->)
-  const rawParts = content.split(/\n(?:\s*---\s*|\s*<!--\s*pagebreak\s*-->\s*)\n/);
-  
-  if (rawParts.length > 1) {
-    return rawParts.map((part, idx) => {
-      const trimmed = part.trim();
-      const firstHeader = trimmed.match(/^#+\s+(.+)$/m);
-      const pageTitle = firstHeader ? firstHeader[1] : `Page ${idx + 1}`;
-      const words = trimmed.split(/\s+/).filter(Boolean).length;
-      return {
-        pageNumber: idx + 1,
-        title: pageTitle,
-        content: trimmed,
-        wordCount: words,
-      };
-    });
-  }
-
-  // 2. Check if content has multiple major headers (## Section)
-  const headerParts = content.split(/\n(?=##\s+)/);
-  if (headerParts.length > 1 && content.length > 900) {
-    return headerParts.map((part, idx) => {
-      const trimmed = part.trim();
-      const firstHeader = trimmed.match(/^#+\s+(.+)$/m);
-      const pageTitle = firstHeader ? firstHeader[1] : (idx === 0 ? noteTitle : `Section ${idx + 1}`);
-      const words = trimmed.split(/\s+/).filter(Boolean).length;
-      return {
-        pageNumber: idx + 1,
-        title: pageTitle,
-        content: trimmed,
-        wordCount: words,
-      };
-    });
-  }
-
-  // 3. Fallback: If content is very long (> 1200 characters), auto-paginate by paragraphs
-  if (content.length > 1200) {
-    const paragraphs = content.split(/\n\n+/);
-    const pages: NotePageItem[] = [];
-    let currentChunk = '';
-    let pageNum = 1;
-
-    paragraphs.forEach((p) => {
-      if ((currentChunk + '\n\n' + p).length > 950 && currentChunk.length > 300) {
-        const words = currentChunk.split(/\s+/).filter(Boolean).length;
-        const firstHeader = currentChunk.match(/^#+\s+(.+)$/m);
-        pages.push({
-          pageNumber: pageNum,
-          title: firstHeader ? firstHeader[1] : (pageNum === 1 ? noteTitle : `Part ${pageNum}`),
-          content: currentChunk.trim(),
-          wordCount: words,
-        });
-        pageNum++;
-        currentChunk = p;
-      } else {
-        currentChunk += (currentChunk ? '\n\n' : '') + p;
-      }
-    });
-
-    if (currentChunk.trim()) {
-      const words = currentChunk.split(/\s+/).filter(Boolean).length;
-      const firstHeader = currentChunk.match(/^#+\s+(.+)$/m);
-      pages.push({
-        pageNumber: pageNum,
-        title: firstHeader ? firstHeader[1] : (pageNum === 1 ? noteTitle : `Part ${pageNum}`),
-        content: currentChunk.trim(),
-        wordCount: words,
-      });
-    }
-
-    return pages;
-  }
-
-  // Single page if note is short & concise
-  return [
-    {
-      pageNumber: 1,
-      title: noteTitle,
-      content: content.trim(),
-      wordCount: content.split(/\s+/).filter(Boolean).length,
-    },
-  ];
-}
-
 export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) => {
   const { notes, updateNote } = useApp();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isFlipping, setIsFlipping] = useState<'next' | 'prev' | null>(null);
   const [showToc, setShowToc] = useState(false);
   const [fontSize, setFontSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [copied, setCopied] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [activeRecallMode, setActiveRecallMode] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+    // --- CODE BLOCK CONTINUITY ENGINE ---
+  const rawPages = note.content.split(/\n\n---\n\n|\[PAGE_BREAK\]/);
+  let inCodeBlock = false;
+  let currentLanguage = '';
 
-  // Notes in the same topic for chapter flipping
+  const pages = rawPages.map(page => {
+    let newPage = page;
+    if (inCodeBlock) {
+      newPage = '```' + currentLanguage + '\n' + newPage;
+    }
+    
+    const lines = newPage.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        if (inCodeBlock) {
+          currentLanguage = trimmed.slice(3).trim();
+        }
+      }
+    }
+
+    if (inCodeBlock) {
+      newPage = newPage + '\n```';
+    }
+    return newPage;
+  });
+  
+  const pagesCount = pages.length;
+  // ------------------------------------
+
+  const scrollToPage = (pageIndex: number) => {
+    if (pageIndex > currentPage) sounds.playPageFlip?.();
+    else sounds.playClick?.();
+    setCurrentPage(pageIndex);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        if (currentPage < pagesCount - 1) scrollToPage(currentPage + 1);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (currentPage > 0) scrollToPage(currentPage - 1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage, pagesCount]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFocusMode(false);
+        sounds.stopFocusDrone();
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFocusMode = async () => {
+    try {
+      if (!document.fullscreenElement && fullscreenContainerRef.current) {
+        await fullscreenContainerRef.current.requestFullscreen();
+        setIsFocusMode(true);
+        sounds.playFocusDrone();
+      } else if (document.exitFullscreen) {
+        await document.exitFullscreen();
+        setIsFocusMode(false);
+        sounds.stopFocusDrone();
+      }
+    } catch (err) {
+      console.error("Fullscreen error", err);
+    }
+  };
+
+  // Notes in the same topic for suggestions
   const topicNotes = topic ? notes.filter((n) => n.topicId === topic.id) : [note];
-  const currentNoteIndex = topicNotes.findIndex((n) => n.id === note.id);
 
   const suggestedNotes = topicNotes.filter(n => n.id !== note.id).slice(0, 3);
   if (suggestedNotes.length < 3) {
@@ -155,7 +131,6 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
     );
     suggestedNotes.push(...otherNotes.slice(0, 3 - suggestedNotes.length));
   }
-  // Still need more? Fill with any random other notes
   if (suggestedNotes.length < 3) {
     const fillNotes = notes.filter(n => 
       n.id !== note.id && 
@@ -164,51 +139,8 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
     suggestedNotes.push(...fillNotes.slice(0, 3 - suggestedNotes.length));
   }
 
-  const pages = chunkNoteIntoPages(note.content, note.title);
-  const activePage = pages[currentPage - 1] || pages[0];
-
-  // Reset to page 1 if note changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [note.id]);
-
-  // Keyboard arrow navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-        goToNextPage();
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        goToPrevPage();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, pages.length]);
-
-  const goToNextPage = () => {
-    if (currentPage < pages.length) {
-      sounds.playPageFlip();
-      setIsFlipping('next');
-      setTimeout(() => {
-        setCurrentPage((p) => p + 1);
-        setIsFlipping(null);
-      }, 220);
-    }
-  };
-
-  const goToPrevPage = () => {
-    if (currentPage > 1) {
-      sounds.playPageFlip();
-      setIsFlipping('prev');
-      setTimeout(() => {
-        setCurrentPage((p) => p - 1);
-        setIsFlipping(null);
-      }, 220);
-    }
-  };
-
   const handleCopyPage = () => {
-    navigator.clipboard.writeText(activePage.content);
+    navigator.clipboard.writeText(note.content);
     setCopied(true);
     sounds.playClick();
     setTimeout(() => setCopied(false), 2000);
@@ -223,345 +155,213 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
   const fontSizeClass =
     fontSize === 'sm' ? 'text-xs leading-relaxed' : fontSize === 'lg' ? 'text-base leading-loose' : 'text-sm leading-relaxed';
 
+  // Calculate words dynamically
+  const wordCount = note.content.split(/\s+/).filter(Boolean).length;
+
   return (
-    <div className="space-y-4">
+    <div ref={fullscreenContainerRef} className={isFocusMode ? "bg-[#020605] text-emerald-400/90 w-screen h-screen overflow-hidden flex flex-col p-4 md:p-6 relative" : "space-y-4 relative"}>
+      {isFocusMode && (
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'radial-gradient(circle at center, transparent 0%, #000 100%)',
+          zIndex: 0
+        }} />
+      )}
       {/* Top Reading Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 px-4 rounded-xl bg-card/80 backdrop-blur border border-border">
-        {/* Topic & Chapter Badge */}
-        <div className="flex items-center gap-2 text-xs font-mono">
-          <span
-            className="px-2 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5"
-            style={{
-              backgroundColor: `${topic?.color || '#00e0ff'}15`,
-              color: topic?.color || '#00e0ff',
-              border: `1px solid ${topic?.color || '#00e0ff'}40`,
-            }}
-          >
-            <BookMarked className="w-3.5 h-3.5" />
-            {topic?.name || 'General Knowledge'}
-          </span>
-
-          <span className="text-muted-foreground hidden sm:inline">/</span>
-          <span className="text-foreground font-semibold truncate max-w-[200px] hidden sm:inline">
-            {note.title}
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-mono text-muted-foreground">FONT</span>
+            <div className="flex rounded-lg border border-border/50 bg-black/40 overflow-hidden">
+              <button onClick={() => setFontSize('sm')} className={`px-2 py-1 ${fontSize === 'sm' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}><Type className="w-3 h-3" /></button>
+              <button onClick={() => setFontSize('md')} className={`px-2 py-1 ${fontSize === 'md' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}><Type className="w-4 h-4" /></button>
+              <button onClick={() => setFontSize('lg')} className={`px-2 py-1 ${fontSize === 'lg' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}><Type className="w-5 h-5" /></button>
+            </div>
+          </div>
+          
+          <button onClick={() => setShowToc(!showToc)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-mono transition-colors ${showToc ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border bg-white/5 text-muted-foreground hover:text-foreground'}`}>
+            <List className="w-3.5 h-3.5" />
+            Meta
+          </button>
         </div>
 
-        {/* Action Controls */}
         <div className="flex items-center gap-2">
-          {/* Font Size Toggle */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setFontSize((s) => (s === 'sm' ? 'md' : s === 'md' ? 'lg' : 'sm'));
-            }}
-            className="p-1.5 px-2 rounded-lg bg-white/5 border border-border text-[11px] font-mono text-muted-foreground hover:text-foreground flex items-center gap-1"
-            title="Toggle Text Size"
+          <button 
+            onClick={toggleFocusMode}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono transition-colors border ${
+              isFocusMode 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+                : 'bg-white/5 border-border text-muted-foreground hover:text-foreground'
+            }`}
+            title="Toggle Sensory Deprivation Mode"
           >
-            <Type className="w-3.5 h-3.5 text-primary" />
-            <span className="uppercase">{fontSize}</span>
+            {isFocusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            {isFocusMode ? 'Exit Deep Dive' : 'Deep Dive'}
           </button>
 
-          {/* Table of Contents / Index Drawer Toggle */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setShowToc((v) => !v);
-            }}
-            className={`p-1.5 px-2.5 rounded-lg border text-xs font-mono flex items-center gap-1.5 transition-all ${
-              showToc
-                ? 'bg-primary/20 border-primary text-primary shadow-neon-glow'
+          <button 
+            onClick={() => { setActiveRecallMode(!activeRecallMode); sounds.playClick?.(); }} 
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono transition-colors border ${
+              activeRecallMode 
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]' 
                 : 'bg-white/5 border-border text-muted-foreground hover:text-foreground'
             }`}
           >
-            <List className="w-3.5 h-3.5" />
-            <span>Pages ({pages.length})</span>
+            <BrainCircuit className={`w-3.5 h-3.5 ${activeRecallMode ? 'animate-pulse' : ''}`} />
+            {activeRecallMode ? 'Interrogation Active' : 'Active Recall'}
           </button>
 
-          {/* Copy Page */}
-          <button
-            onClick={handleCopyPage}
-            className="p-1.5 px-2.5 rounded-lg bg-white/5 border border-border hover:border-primary/40 text-xs font-mono text-foreground flex items-center gap-1.5 transition-colors"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
+          <button onClick={handleCopyPage} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary transition-colors" title="Copy active page text">
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
-
-          {/* Status Pill Toggle */}
-          <button
-            onClick={handleToggleMastery}
-            className={`p-1.5 px-2.5 rounded-lg border text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
-              note.status === 'mastered'
-                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
-                : 'bg-primary/10 border-primary/30 text-primary'
-            }`}
-            title="Click to toggle Mastery"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span className="uppercase">{note.status}</span>
+          <button onClick={handleToggleMastery} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono transition-colors border ${note.status === 'mastered' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' : 'bg-white/5 border-border text-muted-foreground hover:text-primary'}`}>
+            {note.status === 'mastered' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+            {note.status === 'mastered' ? 'Mastered' : 'Mark Mastered'}
           </button>
-
         </div>
       </div>
 
-      {/* Main Book Folio Viewport */}
-      <div className="relative flex gap-4">
-        {/* Interactive Book Page Container */}
-        <div
-          className={`flex-1 relative rounded-2xl cyber-card border border-primary/30 bg-[#070e17] shadow-2xl p-6 sm:p-10 min-h-[500px] flex flex-col justify-between overflow-hidden transition-all duration-200 ${
-            isFlipping === 'next'
-              ? 'opacity-85 translate-x-1 rotate-y-3 scale-[0.99]'
-              : isFlipping === 'prev'
-              ? 'opacity-85 -translate-x-1 -rotate-y-3 scale-[0.99]'
-              : 'opacity-100 translate-x-0 rotate-y-0 scale-100'
-          }`}
-          style={{
-            perspective: '1200px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,224,255,0.03)',
-          }}
-        >
-          {/* Book Spine Center Lighting Effect */}
-          <div className="absolute top-0 bottom-0 left-0 w-3 bg-gradient-to-r from-black/60 to-transparent pointer-events-none" />
-          <div className="absolute top-0 bottom-0 right-0 w-3 bg-gradient-to-l from-black/60 to-transparent pointer-events-none" />
-
-          {/* Top Page Header */}
-          <div className="border-b border-border/50 pb-3 flex items-center justify-between text-xs font-mono text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className="text-primary font-bold">PAGE {activePage.pageNumber}</span>
-              <span>/</span>
-              <span>{pages.length}</span>
-              <span className="text-border hidden sm:inline">|</span>
-              <span className="text-foreground/80 font-medium truncate max-w-[280px] hidden sm:inline">
-                {activePage.title}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 text-[11px]">
-              <span>{activePage.wordCount} words</span>
-              <span className="text-border">·</span>
-              <span>{note.difficulty.toUpperCase()}</span>
+      {showToc && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+          <div className="p-4 rounded-xl bg-card border border-primary/20 space-y-3">
+            <h3 className="text-[10px] font-mono uppercase text-muted-foreground flex items-center gap-1.5"><BookMarked className="w-3 h-3 text-primary" /> Suggested Linkages</h3>
+            <div className="space-y-2">
+              {suggestedNotes.map(sn => (
+                <Link key={sn.id} to={`/notes/${sn.id}`} className="block p-2 rounded-lg bg-black/40 border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-colors group">
+                  <p className="text-xs font-heading font-semibold text-foreground group-hover:text-primary flex items-center gap-1.5"><ArrowRight className="w-3 h-3 text-muted-foreground" /> {sn.title}</p>
+                  <p className="text-[10px] text-muted-foreground line-clamp-1 mt-1 ml-4.5">{sn.summary}</p>
+                </Link>
+              ))}
             </div>
           </div>
-
-          {/* Page Content Body (Formatted Markdown / Text) */}
-          <div className="my-6 flex-1 overflow-y-auto pr-2 space-y-4">
-            <div className={`prose prose-invert max-w-none font-mono ${fontSizeClass}`}>
-              {activePage.content.split('\n\n').map((para, pIdx) => {
-                if (para.startsWith('# ')) {
-                  return (
-                    <h1 key={pIdx} className="text-xl font-heading font-bold text-foreground mt-3 mb-2 border-b border-border/40 pb-2">
-                      {para.replace('# ', '')}
-                    </h1>
-                  );
-                }
-                if (para.startsWith('## ')) {
-                  return (
-                    <h2 key={pIdx} className="text-base font-heading font-bold text-primary mt-3 mb-1.5 flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {para.replace('## ', '')}
-                    </h2>
-                  );
-                }
-                if (para.startsWith('### ')) {
-                  return (
-                    <h3 key={pIdx} className="text-sm font-heading font-semibold text-[hsl(var(--neon-green))] mt-2 mb-1">
-                      {para.replace('### ', '')}
-                    </h3>
-                  );
-                }
-                if (para.startsWith('```')) {
-                  const code = para.replace(/```[a-z]*\n?|```$/g, '');
-                  return (
-                    <div key={pIdx} className="p-3.5 rounded-xl bg-black/80 border border-primary/20 font-mono text-xs text-primary/95 overflow-x-auto shadow-inner">
-                      <pre>{code}</pre>
-                    </div>
-                  );
-                }
-                if (para.startsWith('> ')) {
-                  return (
-                    <blockquote key={pIdx} className="p-3 rounded-xl bg-primary/5 border-l-2 border-primary text-xs italic text-muted-foreground my-2">
-                      {para.replace(/^>\s*/gm, '')}
-                    </blockquote>
-                  );
-                }
-                if (para.startsWith('- ') || para.startsWith('* ')) {
-                  const items = para.split('\n').filter(Boolean);
-                  return (
-                    <ul key={pIdx} className="space-y-1 my-2 pl-4 list-disc text-foreground/90">
-                      {items.map((it, iIdx) => (
-                        <li key={iIdx}>{it.replace(/^[-*]\s+/, '')}</li>
-                      ))}
-                    </ul>
-                  );
-                }
-
-                return (
-                  <p key={pIdx} className="text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                    {para}
-                  </p>
-                );
-              })}
-              
-              {/* Intelligent Suggestions at the end of the note */}
-              {currentPage === pages.length && suggestedNotes.length > 0 && (
-                <div className="mt-16 pt-8 border-t border-primary/20">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <h3 className="font-heading font-bold text-sm text-primary uppercase tracking-wider">
-                      Related Knowledge
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {suggestedNotes.map((sn) => (
-                      <Link
-                        key={sn.id}
-                        to={`/notes/${sn.id}`}
-                        onClick={() => sounds.playClick()}
-                        className="group flex flex-col p-4 rounded-xl border border-border bg-black/40 hover:bg-primary/5 hover:border-primary/50 transition-all cursor-pointer relative overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="flex items-start justify-between gap-2 mb-2 relative z-10">
-                          <h4 className="font-heading font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                            {sn.title}
-                          </h4>
-                          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:-rotate-45 transition-all flex-shrink-0" />
-                        </div>
-                        <p className="text-xs font-mono text-muted-foreground line-clamp-3 mb-4 relative z-10">
-                          {sn.summary || sn.content.substring(0, 100) + '...'}
-                        </p>
-                        <div className="mt-auto flex flex-wrap gap-1.5 relative z-10">
-                          {sn.tags.slice(0, 2).map((t, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 text-[10px] font-mono text-muted-foreground">
-                              #{t}
-                            </span>
-                          ))}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
+          <div className="p-4 rounded-xl bg-card border border-border space-y-3">
+            <h3 className="text-[10px] font-mono uppercase text-muted-foreground flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-[hsl(var(--neon-green))]" /> Note Metrics</h3>
+            <div className="space-y-2 text-xs font-mono text-muted-foreground">
+              <div className="flex justify-between border-b border-border/40 pb-1"><span>Difficulty</span><span className="text-foreground">{note.difficulty.toUpperCase()}</span></div>
+              <div className="flex justify-between border-b border-border/40 pb-1"><span>Word Count</span><span className="text-foreground">{wordCount}</span></div>
+              <div className="flex justify-between border-b border-border/40 pb-1"><span>Created</span><span className="text-foreground">{new Date(note.createdAt).toLocaleDateString()}</span></div>
+              <div className="flex justify-between border-b border-border/40 pb-1"><span>Last Read</span><span className="text-foreground">{note.lastReviewed ? new Date(note.lastReviewed).toLocaleDateString() : 'Never'}</span></div>
             </div>
-          </div>
-
-          {/* Bottom Page Footer & Flip Controls */}
-          <div className="pt-4 border-t border-border/50 flex items-center justify-between">
-            {/* Previous Page Button */}
-            <button
-              onClick={goToPrevPage}
-              disabled={currentPage <= 1}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-mono transition-all ${
-                currentPage <= 1
-                  ? 'opacity-30 border-transparent text-muted-foreground cursor-not-allowed'
-                  : 'bg-white/5 border-border hover:border-primary/50 text-foreground hover:bg-primary/10 shadow-sm'
-              }`}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous Page</span>
-            </button>
-
-            {/* Page Slider / Progress Indicator */}
-            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-              <span className="hidden sm:inline">Page</span>
-              <div className="flex gap-1">
-                {pages.map((p) => (
-                  <button
-                    key={p.pageNumber}
-                    onClick={() => {
-                      sounds.playPageFlip();
-                      setCurrentPage(p.pageNumber);
-                    }}
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${
-                      p.pageNumber === currentPage
-                        ? 'bg-primary scale-125 shadow-[0_0_8px_hsl(var(--primary))]'
-                        : 'bg-white/20 hover:bg-white/40'
-                    }`}
-                    title={`Jump to Page ${p.pageNumber}: ${p.title}`}
-                  />
-                ))}
-              </div>
-              <span className="font-bold text-foreground ml-1">{currentPage} of {pages.length}</span>
-            </div>
-
-            {/* Next Page Button */}
-            <button
-              onClick={goToNextPage}
-              disabled={currentPage >= pages.length}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-mono transition-all ${
-                currentPage >= pages.length
-                  ? 'opacity-30 border-transparent text-muted-foreground cursor-not-allowed'
-                  : 'bg-primary/10 border-primary/40 hover:bg-primary/20 text-primary font-bold shadow-neon-glow'
-              }`}
-            >
-              <span>Next Page</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
         </div>
+      )}
 
-        {/* Collapsible Table of Contents & Topic Chapters Sidebar */}
-        {showToc && (
-          <div className="w-72 bg-card/90 backdrop-blur-md border border-border rounded-2xl p-4 cyber-card space-y-4 animate-in slide-in-from-right-4 duration-200 flex flex-col justify-between shrink-0">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                <span className="text-xs font-heading font-bold text-foreground flex items-center gap-1.5">
-                  <Bookmark className="w-3.5 h-3.5 text-primary" /> Table of Contents
-                </span>
-                <span className="text-[10px] font-mono text-muted-foreground">{pages.length} Pages</span>
+      {/* Phase 1: Fluid Navigation & The 3D Grimoire */}
+      <div className={`relative group ${isFocusMode ? "flex-1 flex flex-col min-h-0 mt-2" : ""}`}>
+        
+        {/* Holographic Navigation Chevrons & Click Zones */}
+        <div 
+          onClick={() => currentPage > 0 && scrollToPage(currentPage - 1)}
+          className={`absolute left-[-20px] top-0 bottom-0 w-[15%] z-20 flex items-center justify-start pl-2 cursor-pointer transition-opacity duration-300 ${currentPage === 0 ? 'opacity-0 pointer-events-none' : 'opacity-0 hover:opacity-100 group-hover:opacity-60'}`}
+          style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.8), transparent)' }}
+        >
+          <ChevronLeft className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(0,224,255,0.8)] -translate-x-2 hover:scale-110 transition-transform" />
+        </div>
+
+        <div 
+          onClick={() => currentPage < pagesCount - 1 && scrollToPage(currentPage + 1)}
+          className={`absolute right-[-20px] top-0 bottom-0 w-[15%] z-20 flex items-center justify-end pr-2 cursor-pointer transition-opacity duration-300 ${currentPage === pagesCount - 1 ? 'opacity-0 pointer-events-none' : 'opacity-0 hover:opacity-100 group-hover:opacity-60'}`}
+          style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.8), transparent)' }}
+        >
+          <ChevronRight className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(0,224,255,0.8)] translate-x-2 hover:scale-110 transition-transform" />
+        </div>
+
+        <div className={`bg-[#0b101a] border border-border/50 rounded-2xl p-5 md:p-6 cyber-card shadow-2xl relative z-10 transition-all duration-500 overflow-hidden ${isFocusMode ? "flex-1 flex flex-col min-h-0" : ""}`}>
+          
+          {/* Neon Progress Bar */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
+            <div 
+              className="h-full bg-primary shadow-[0_0_10px_rgba(0,224,255,0.8)] transition-all duration-300"
+              style={{ width: `${((currentPage + 1) / pagesCount) * 100}%` }}
+            />
+          </div>
+
+          <div className="mb-3 pb-3 border-b border-border/40 flex justify-between items-end mt-1 shrink-0">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`px-2 py-0.5 rounded text-[9px] font-mono uppercase ${note.status === 'mastered' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary/20 text-primary'}`}>{note.status}</span>
+                {topic && <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] font-mono text-muted-foreground uppercase">{topic.name}</span>}
               </div>
-
-              {/* Page Index List */}
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                {pages.map((p) => (
-                  <button
-                    key={p.pageNumber}
-                    onClick={() => {
-                      sounds.playPageFlip();
-                      setCurrentPage(p.pageNumber);
-                    }}
-                    className={`w-full text-left p-2 rounded-xl text-xs font-mono flex items-center justify-between transition-all ${
-                      p.pageNumber === currentPage
-                        ? 'bg-primary/20 border border-primary/40 text-primary font-bold shadow-sm'
-                        : 'bg-white/[0.03] hover:bg-white/[0.07] text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <span className="truncate pr-2">{p.pageNumber}. {p.title}</span>
-                    <span className="text-[10px] opacity-60 shrink-0">{p.wordCount}w</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Topic Chapters / Sibling Notes */}
-              {topic && topicNotes.length > 1 && (
-                <div className="pt-3 border-t border-border/40 space-y-2">
-                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-                    <span>TOPIC CHAPTERS</span>
-                    <span>{topicNotes.length} Notes</span>
-                  </div>
-                  <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
-                    {topicNotes.map((tn) => (
-                      <div
-                        key={tn.id}
-                        className={`p-1.5 rounded-lg text-xs font-mono truncate flex items-center gap-2 ${
-                          tn.id === note.id ? 'text-primary font-bold bg-primary/10' : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <CornerDownRight className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{tn.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Keyboard Hint */}
-            <div className="p-2.5 rounded-xl bg-black/40 border border-border/40 text-[10px] font-mono text-muted-foreground text-center">
-              Use <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-foreground font-bold">←</kbd> and{' '}
-              <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-foreground font-bold">→</kbd> arrow keys to flip pages
+              <h1 className="text-2xl md:text-3xl font-heading font-extrabold tracking-tight text-foreground">{note.title}</h1>
             </div>
           </div>
-        )}
+
+          {/* Explicit Book Pages Container */}
+          <div 
+            className={`relative w-full ${isFocusMode ? "flex-1 min-h-0" : "pb-4"}`} 
+            style={{ 
+              height: isFocusMode ? '100%' : 'calc(100vh - 190px)',
+              perspective: '2500px'
+            }}
+          >
+            {pages.map((pageContent, idx) => {
+              const isCurrent = idx === currentPage;
+              const isPast = idx < currentPage;
+              
+              return (
+              <div 
+                key={idx} 
+                className={`absolute inset-0 w-full h-full overflow-y-auto pr-4 prose prose-invert max-w-none font-mono ${fontSizeClass} custom-scrollbar transition-all duration-[700ms] ease-out`}
+                style={{
+                  transformOrigin: isPast ? '0% 50%' : '100% 50%',
+                  transform: isCurrent ? 'rotateY(0deg) translateZ(0px)' : 
+                             isPast ? 'rotateY(-60deg) translateZ(-200px)' : 
+                             'rotateY(60deg) translateZ(-200px)',
+                  opacity: isCurrent ? 1 : 0,
+                  pointerEvents: isCurrent ? 'auto' : 'none',
+                  zIndex: isCurrent ? 10 : 1
+                }}
+              >
+                
+                {/* Page Number Indicator */}
+                <div className="text-[9px] font-mono text-primary/70 text-right mb-2">
+                  PAGE {idx + 1} OF {pagesCount}
+                </div>
+
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                  components={{
+                    hr: ({node, ...props}) => <hr className="page-break-line my-8 border-border/40" {...props} />,
+                    h1: ({node, ...props}) => <h1 className="text-xl font-heading font-bold text-foreground mt-2 mb-4 border-b border-border/40 pb-2" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-lg font-heading font-bold text-primary mt-5 mb-3 flex items-center gap-2" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-base font-heading font-bold text-foreground mt-4 mb-2" {...props} />,
+                    p: ({node, ...props}) => <p className="text-muted-foreground mb-4 leading-relaxed whitespace-pre-wrap break-words" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc list-outside ml-5 space-y-1 my-4 text-muted-foreground marker:text-primary" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal list-outside ml-5 space-y-1 my-4 text-muted-foreground marker:text-primary" {...props} />,
+                    li: ({node, ...props}) => <li className="pl-1" {...props} />,
+                    strong: ({node, ...props}) => (
+                      <strong 
+                        className={`font-bold transition-all duration-300 ${activeRecallMode ? 'bg-black text-transparent select-none hover:text-rose-400 hover:select-auto hover:bg-black/50 cursor-crosshair border border-rose-500/30 rounded px-1' : 'text-foreground'}`} 
+                        {...props} 
+                      />
+                    ),
+                    code: ({node, inline, ...props}: any) => 
+                      inline 
+                        ? <code className={`px-1.5 py-0.5 rounded text-[0.9em] break-all transition-all duration-300 ${activeRecallMode ? 'bg-black text-transparent select-none hover:text-rose-400 hover:select-auto hover:bg-black/50 cursor-crosshair border border-rose-500/30' : 'bg-primary/10 text-primary'}`} {...props} />
+                        : <code className={`block p-3 rounded-xl border text-[11px] overflow-x-auto whitespace-pre break-words shadow-inner my-4 transition-all duration-300 ${activeRecallMode ? 'bg-black text-transparent select-none hover:text-emerald-400/90 hover:select-auto hover:bg-black/50 cursor-crosshair border-rose-500/30' : 'bg-black/60 border-white/10 text-emerald-400/90'}`} {...props} />,
+                    blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-primary/50 pl-4 italic text-muted-foreground bg-primary/5 py-1 pr-2 rounded-r" {...props} />,
+                    a: ({node, ...props}) => <a className="text-primary hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />,
+                    input: ({node, type, ...props}: any) => type === 'checkbox' ? <input type="checkbox" className="accent-primary mr-2" {...props} /> : <input {...props} />,
+                    img: ({node, ...props}) => (
+                      <div className="my-6 rounded-xl overflow-hidden border border-white/10 shadow-lg bg-black/40 flex justify-center p-2">
+                        <img className="max-w-full h-auto object-contain max-h-[400px] rounded-lg" {...props} />
+                      </div>
+                    ),
+                    table: ({node, ...props}) => <div className="overflow-x-auto my-6 rounded-xl border border-white/10"><table className="w-full text-left border-collapse text-sm" {...props} /></div>,
+                    thead: ({node, ...props}) => <thead className="border-b border-white/20 bg-white/5" {...props} />,
+                    tr: ({node, ...props}) => <tr className="border-b border-white/10 hover:bg-white/5 transition-colors" {...props} />,
+                    th: ({node, ...props}) => <th className="p-3 font-heading font-bold text-primary" {...props} />,
+                    td: ({node, ...props}) => <td className="p-3 text-muted-foreground" {...props} />
+                  }}
+                >
+                  {pageContent}
+                </ReactMarkdown>
+              </div>
+            );
+            })}
+          </div>
+
+        </div>
       </div>
     </div>
   );

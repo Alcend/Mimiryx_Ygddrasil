@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Copy, Plus, FileText, CheckCircle2 } from 'lucide-react';
+import { Copy, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sounds } from '../utils/audio';
 

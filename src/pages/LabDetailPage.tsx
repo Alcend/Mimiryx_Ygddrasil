@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Terminal, CheckCircle2, RotateCcw, Play, HelpCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, RotateCcw, HelpCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audio';
 

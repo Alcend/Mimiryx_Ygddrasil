@@ -3,19 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   ArrowLeft,
-  Boxes,
   FileText,
   Terminal,
   ArrowRight,
   BookOpen,
-  Sparkles,
-  Layers,
-  CheckCircle2,
   X,
   Eye,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
-import { BookReader, chunkNoteIntoPages } from '../components/BookReader';
+import { BookReader } from '../components/BookReader';
 import { Note } from '../types';
 import { resolveNoteTopic } from './NotesPage';
 
@@ -76,7 +72,7 @@ export const TopicDetailPage: React.FC = () => {
                 borderColor: `${topic.color}50`,
               }}
             >
-              {topic.code} // {topic.category}
+              {topic.code} // {topic.category.toUpperCase()} REALM
             </span>
             <span className="text-xs font-mono text-muted-foreground">
               {topicNotes.length} Knowledge Chapters · {progressPct}% Mastered
@@ -144,8 +140,7 @@ export const TopicDetailPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {topicNotes.map((note) => {
-            const pages = chunkNoteIntoPages(note.content, note.title);
-            const pageCount = pages.length;
+            const pageCount = Math.max(1, Math.ceil(note.content.split('---').length));
 
             return (
               <div

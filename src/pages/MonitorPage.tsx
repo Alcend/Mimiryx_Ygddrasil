@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Activity, Server, Cpu, HardDrive, Wifi, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { sounds } from '../utils/audio';
+import { Activity, Server } from 'lucide-react';
 
 export const MonitorPage: React.FC = () => {
   const { metrics, activityLogs } = useApp();

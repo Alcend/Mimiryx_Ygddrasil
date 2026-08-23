@@ -10,11 +10,7 @@ import {
   GraduationCap,
   Sparkles,
   Compass,
-  Copy,
-  Volume2,
-  VolumeX,
-  Radio,
-  Palette
+  Copy
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ThemeMode } from '../types';

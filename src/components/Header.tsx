@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Plus, Image, UploadCloud, Moon, Monitor, Settings, Palette, Volume2, VolumeX, Menu, Sparkles, Brain, Key } from 'lucide-react';
+import { Search, Plus, Image, UploadCloud, Moon, Monitor, Settings, Palette, Volume2, VolumeX, Menu, Brain, Key } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sounds } from '../utils/audio';

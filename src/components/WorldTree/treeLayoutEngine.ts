@@ -1,5 +1,5 @@
-import { TreeNode, TreeData, TreeNodeType } from './types';
-import { Topic, Note, Lab } from '../../types';
+import { TreeNode, TreeData } from './types';
+import { Topic, Note } from '../../types';
 
 // Pre-defined foundational roots of knowledge (Underground network)
 const SEED_FOUNDATIONS = [

@@ -6,8 +6,6 @@ import { useApp } from '../context/AppContext';
 import { DigitalVinesFrame } from './DigitalVinesFrame';
 import { SettingsModal } from './SettingsModal';
 import { OracleChat } from './OracleChat';
-import { Eye } from 'lucide-react';
-import { sounds } from '../utils/audio';
 
 export const Layout: React.FC = () => {
   const { customBg, bgOpacity, bgBlur, autoDim, isSidebarOpen } = useApp();

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   BarChart3,
-  Sparkles,
   TrendingUp,
   Flame,
   CheckCircle2,
@@ -12,23 +11,16 @@ import {
   Award,
   Layers,
   ArrowUpRight,
-  Clock,
-  Target,
   Shield,
   Brain,
   Filter,
   Calendar,
-  Cpu,
-  Database,
   RefreshCw,
   Download,
   ChevronRight,
-  AlertCircle,
   FlaskConical,
   FileText,
   Boxes,
-  Check,
-  Share2,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 

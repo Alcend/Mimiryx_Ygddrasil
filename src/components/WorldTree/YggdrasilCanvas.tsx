@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { generateYggdrasilTree, YggdrasilTreeModel, YggdrasilLeaf, YggdrasilRoot } from './yggdrasilTreeEngine';
+import React, { useRef, useEffect, useState } from 'react';
+import { generateYggdrasilTree, YggdrasilTreeModel, YggdrasilLeaf } from './yggdrasilTreeEngine';
 import { useApp } from '../../context/AppContext';
 import { Camera } from './types';
 import { sounds } from '../../utils/audio';

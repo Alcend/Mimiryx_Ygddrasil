@@ -172,20 +172,37 @@ export function classifyDocument(
     const tDescLower = (t.description || '').toLowerCase();
     const tCatLower = (t.category || '').toLowerCase();
 
-    // Check direct topic name match
+    // Check direct topic name match (exact phrase)
     if (textLower.includes(tNameLower)) score += 40;
-    if (tNameLower.split(' ').some((w) => w.length > 3 && textLower.includes(w))) score += 20;
+    
+    // Check individual significant words with word boundaries (to avoid "infra" matching "infrastructure")
+    const words = tNameLower.split(' ').filter(w => w.length > 4);
+    let matchedWords = 0;
+    words.forEach(w => {
+      if (new RegExp(`\\b${w}\\b`, 'i').test(textLower)) {
+        matchedWords++;
+      }
+    });
+    if (matchedWords > 0) {
+      score += matchedWords * 10;
+    }
 
     // Check taxonomy matching this topic's name or category
+    let taxonomyMatched = false;
     Object.entries(DOMAIN_TAXONOMY).forEach(([domainName, dom]) => {
       if (
         domainName.toLowerCase().includes(tNameLower) ||
         tNameLower.includes(domainName.toLowerCase()) ||
-        dom.category.toLowerCase().includes(tCatLower)
+        (tCatLower && dom.category.toLowerCase().includes(tCatLower))
       ) {
+        taxonomyMatched = true;
+        let keywordHits = 0;
         dom.keywords.forEach((kw) => {
-          if (textLower.includes(kw.toLowerCase())) score += 8;
+          if (new RegExp(`\\b${kw.toLowerCase()}\\b`, 'i').test(textLower)) {
+            keywordHits++;
+          }
         });
+        score += (keywordHits * 5); // 5 points per keyword
       }
     });
 
@@ -195,8 +212,8 @@ export function classifyDocument(
     }
   });
 
-  // If match score is high enough, assign to existing topic
-  if (bestExistingTopic && bestExistingScore >= 16) {
+  // Threshold increased to 25 to prevent aggressive false positives
+  if (bestExistingTopic && bestExistingScore >= 25) {
     const conf = Math.min(99, Math.round(50 + bestExistingScore * 1.5));
     return {
       filename: doc.filename,
@@ -213,9 +230,9 @@ export function classifyDocument(
     };
   }
 
-  // 2. No solid existing topic match -> Check taxonomy for creating a NEW topic branch
+  // 2. No solid existing topic match -> Return as "Needs Review"
+  // We do NOT auto-create a topic here. The UI Review Queue will handle it.
   let bestTaxonomyName = 'General Engineering';
-  let bestTaxonomyData = { category: 'General Knowledge', color: '#00e0ff', code: 'GEN' };
   let bestTaxScore = 0;
 
   Object.entries(DOMAIN_TAXONOMY).forEach(([domName, data]) => {
@@ -226,13 +243,8 @@ export function classifyDocument(
     if (score > bestTaxScore) {
       bestTaxScore = score;
       bestTaxonomyName = domName;
-      bestTaxonomyData = data;
     }
   });
-
-  // If filename or title is strong, use it as new topic name
-  let newTopicName = bestTaxScore >= 10 ? bestTaxonomyName : doc.title;
-  if (newTopicName.length > 35) newTopicName = newTopicName.slice(0, 35);
 
   return {
     filename: doc.filename,
@@ -241,11 +253,10 @@ export function classifyDocument(
     content: doc.content,
     tags: extractedTags.slice(0, 5),
     difficulty,
-    suggestedTopicName: newTopicName,
-    suggestedCategory: bestTaxonomyData.category,
-    suggestedColor: bestTaxonomyData.color,
+    suggestedTopicName: bestTaxScore >= 10 ? bestTaxonomyName : doc.title,
     isNewTopic: true,
-    confidence: bestTaxScore >= 10 ? 92 : 75,
+    matchedTopicId: undefined, // Explicitly undefined to trigger Review Queue
+    confidence: bestTaxScore >= 10 ? 40 : 10, // Very low confidence
   };
 }
 
@@ -556,17 +567,8 @@ export async function organizeImportedFiles(
 
               documents.push(classified);
 
-              if (classified.isNewTopic && classified.suggestedTopicName) {
-                if (!newTopicsMap.has(classified.suggestedTopicName)) {
-                  newTopicsMap.set(classified.suggestedTopicName, {
-                    name: classified.suggestedTopicName,
-                    category: classified.suggestedCategory || 'General Knowledge',
-                    color: classified.suggestedColor || '#00e0ff',
-                    description: `Neural cluster synthesized for ${classified.suggestedTopicName} knowledge records.`,
-                    code: classified.suggestedTopicName.slice(0, 4).toUpperCase(),
-                  });
-                  logs.push(`[NEW BRANCH] Discovered domain -> Created Topic "${classified.suggestedTopicName}" [${classified.suggestedCategory}]`);
-                }
+              if (!classified.matchedTopicId) {
+                logs.push(`[NEEDS REVIEW] "${classified.title}" scored below threshold. Added to Review Queue.`);
               }
             });
 

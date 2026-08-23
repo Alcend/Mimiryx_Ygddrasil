@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import { GraduationCap, Send, Sparkles, BookOpen } from 'lucide-react';
+import { GraduationCap, Send } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 export const TutorPage: React.FC = () => {

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Unlock, RotateCcw, Plus, Minus, Search, Sparkles, BookOpen, Terminal, CheckCircle2, Flame, ExternalLink, X } from 'lucide-react';
+import { Lock, Unlock, RotateCcw, Plus, Minus, BookOpen, X } from 'lucide-react';
 import { sounds } from '../../utils/audio';
 
 // EXACT CONSTANTS FROM BASE44 APP BUNDLE

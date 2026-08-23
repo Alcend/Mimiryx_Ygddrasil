@@ -9,23 +9,29 @@ import {
   RotateCw,
   X,
   BookOpen,
-  Sparkles,
-  CheckCircle2,
   Plus,
   Search,
+  Edit3,
+  FolderTree,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { resolveNoteTopic } from './NotesPage';
 import { Topic } from '../types';
 
 export const TopicsPage: React.FC = () => {
-  const { topics, addTopic, notes, labs } = useApp();
+  const { topics, addTopic, updateTopic, notes, labs } = useApp();
   const navigate = useNavigate();
   const [flippedTopics, setFlippedTopics] = useState<Record<string, boolean>>({});
   const [filterQuery, setFilterQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTopicName, setNewTopicName] = useState('');
   const [newTopicDesc, setNewTopicDesc] = useState('');
+  const [newTopicRealm, setNewTopicRealm] = useState('Core Concept');
+  
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const [editTopicName, setEditTopicName] = useState('');
+  const [editTopicDesc, setEditTopicDesc] = useState('');
+  const [editTopicRealm, setEditTopicRealm] = useState('');
 
   const handleToggleFlip = (topicId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,7 +51,7 @@ export const TopicsPage: React.FC = () => {
     addTopic({
       name: newTopicName,
       description: newTopicDesc,
-      category: 'Core Concept',
+      category: newTopicRealm || 'Core Concept',
       color: 'hsl(var(--primary))',
       code: newTopicName.substring(0, 3).toUpperCase(),
       icon: 'box'
@@ -53,8 +59,33 @@ export const TopicsPage: React.FC = () => {
     
     setNewTopicName('');
     setNewTopicDesc('');
+    setNewTopicRealm('Core Concept');
     setShowCreateModal(false);
     sounds.playSuccess();
+  };
+
+  const handleUpdateTopic = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTopic || !editTopicName.trim()) return;
+    
+    updateTopic(editingTopic.id, {
+      name: editTopicName,
+      description: editTopicDesc,
+      category: editTopicRealm || 'Core Concept',
+      code: editTopicName.substring(0, 3).toUpperCase(),
+    });
+    
+    setEditingTopic(null);
+    sounds.playSuccess();
+  };
+
+  const openEditModal = (t: Topic, e: React.MouseEvent) => {
+    e.stopPropagation();
+    sounds.playClick();
+    setEditingTopic(t);
+    setEditTopicName(t.name);
+    setEditTopicDesc(t.description);
+    setEditTopicRealm(t.category);
   };
 
   const filteredTopics = topics.filter(t => 
@@ -145,7 +176,7 @@ export const TopicsPage: React.FC = () => {
                           borderColor: `${topic.color}40`,
                         }}
                       >
-                        {topic.code} // {topic.category}
+                        {topic.code} // {topic.category.toUpperCase()} REALM
                       </span>
                       <span className="text-[11px] font-mono text-muted-foreground">{progress}% Mastered</span>
                     </div>
@@ -313,6 +344,42 @@ export const TopicsPage: React.FC = () => {
                 >
                   Ignite Topic
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingTopic && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border border-primary/40 rounded-2xl p-6 w-full max-w-md cyber-card shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6 border-b border-border/50 pb-4">
+              <h3 className="text-lg font-heading font-bold text-foreground flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-primary" /> Edit Topic & Realm
+              </h3>
+              <button onClick={() => setEditingTopic(null)} className="p-1 rounded-lg hover:bg-white/5 text-muted-foreground transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateTopic} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-muted-foreground uppercase">Topic Name</label>
+                <input type="text" autoFocus required value={editTopicName} onChange={(e) => setEditTopicName(e.target.value)} className="w-full bg-background/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 font-mono" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-primary font-bold uppercase flex items-center gap-1.5"><FolderTree className="w-3.5 h-3.5"/> Realm (Category)</label>
+                <input type="text" required value={editTopicRealm} onChange={(e) => setEditTopicRealm(e.target.value)} className="w-full bg-primary/5 border border-primary/20 rounded-xl px-3 py-2 text-sm text-primary focus:outline-none focus:border-primary/50 font-mono shadow-inner" />
+                <p className="text-[9px] text-muted-foreground mt-1">Changing this will instantly move this topic and all its notes to the specified Realm tree.</p>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-muted-foreground uppercase">Description</label>
+                <textarea rows={3} value={editTopicDesc} onChange={(e) => setEditTopicDesc(e.target.value)} className="w-full bg-background/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 font-mono resize-none" />
+              </div>
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-border/50">
+                <button type="button" onClick={() => setEditingTopic(null)} className="px-4 py-2 rounded-xl text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">Cancel</button>
+                <button type="submit" disabled={!editTopicName.trim() || !editTopicRealm.trim()} className="px-4 py-2 bg-primary text-primary-foreground font-mono text-xs rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50">Save Changes</button>
               </div>
             </form>
           </div>

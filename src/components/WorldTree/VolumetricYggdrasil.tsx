@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { generateVolumetricTree, VolumetricTreeModel, FoliageParticle, RealmBough } from './canopyClusteringEngine';
-import { Lock, Unlock, RotateCcw, Plus, Minus, Search, Sparkles, BookOpen, X, Play, Sliders } from 'lucide-react';
+import { generateVolumetricTree, VolumetricTreeModel, FoliageParticle } from './canopyClusteringEngine';
+import { Lock, Unlock, RotateCcw, Plus, Minus, BookOpen, X, Sliders } from 'lucide-react';
 import { sounds } from '../../utils/audio';
 import { useNavigate } from 'react-router-dom';
 

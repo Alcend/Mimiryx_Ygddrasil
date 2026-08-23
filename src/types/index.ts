@@ -6,6 +6,17 @@ export type NoteDifficulty = 'beginner' | 'intermediate' | 'advanced';
 export type LabStatus = 'not_started' | 'in_progress' | 'completed';
 export type LabDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
+export interface Realm {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Topic {
   id: string;
   name: string;
@@ -13,7 +24,8 @@ export interface Topic {
   description: string;
   icon: string;
   color: string;
-  category: string;
+  category: string; // Deprecated
+  realmId?: string;
   order: number;
 }
 

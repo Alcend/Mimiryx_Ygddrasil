@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { YggdrasilWorldTreeCanvas } from '../components/WorldTree/YggdrasilWorldTreeCanvas';
 import { useApp } from '../context/AppContext';
 import { useNavigate, useOutletContext } from 'react-router-dom';
@@ -9,22 +9,20 @@ import {
   Trophy,
   Flame,
   Sparkles,
-  ChevronRight,
   Activity,
   Zap,
-  Award,
   Server,
-  Cpu,
   Radio,
   BarChart3,
   Terminal,
-  Layers,
   ArrowUpRight,
   Clock,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
+import { SystemLogs } from '../components/dashboard/SystemLogs';
+import { KnowledgeDistribution } from '../components/dashboard/KnowledgeDistribution';
 
-import { DigitalButterflies, TriviaFact } from '../components/DigitalButterflies';
+import { TriviaFact } from '../components/DigitalButterflies';
 
 import { AnalyticsGuideBanner } from '../components/AnalyticsGuideBanner';
 
@@ -49,9 +47,17 @@ export const Dashboard: React.FC = () => {
   const { isIdle } = useOutletContext<{ isIdle: boolean }>() || { isIdle: false };
   const navigate = useNavigate();
 
+  const [activeSideTab, setActiveSideTab] = useState<'all' | 'telemetry' | 'analytics' | 'logs'>('all');
+  const [activeRealm, setActiveRealm] = useState<string>('ALL');
+
+  const availableRealms = React.useMemo(() => {
+    const categories = Array.from(new Set(topics.map(t => t.category))).filter(Boolean);
+    return ['ALL', ...categories];
+  }, [topics]);
+
+
   const [triviaIdx, setTriviaIdx] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [activeSideTab, setActiveSideTab] = useState<'all' | 'telemetry' | 'analytics'>('all');
 
   // Live streaming log simulation from Monitor
   const [liveLogs, setLiveLogs] = useState<string[]>([
@@ -165,7 +171,7 @@ export const Dashboard: React.FC = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
               <p className="text-xs font-mono font-bold text-emerald-400">ONLINE</p>
             </div>
-            <p className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">RTT 0.42ms · 4 Nodes</p>
+            <p className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">RTT 0.42ms Â· 4 Nodes</p>
           </div>
         </div>
 
@@ -189,10 +195,30 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Digital Yggdrasil Tree Organism + Daily Knowledge Recall */}
         <div className="space-y-4 lg:col-span-8">
+
+
+
           {/* Yggdrasil Canvas Viewport */}
-          <div className="w-full">
-            <YggdrasilWorldTreeCanvas />
+          <div className="w-full relative rounded-2xl overflow-hidden border border-border/40 cyber-card shadow-[0_0_15px_rgba(0,240,255,0.05)]">
+            <div className="absolute top-4 left-4 z-20">
+              <div className="flex items-center gap-2 bg-black/70 backdrop-blur-md border border-white/10 p-1.5 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                <span className="text-[10px] font-mono text-muted-foreground px-2 uppercase tracking-widest hidden sm:inline-block">Filter Realm:</span>
+                <select
+                  value={activeRealm}
+                  onChange={(e) => { sounds.playClick(); setActiveRealm(e.target.value); }}
+                  className="bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 transition-all text-xs font-mono font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer uppercase tracking-wider"
+                >
+                  {availableRealms.map(realm => (
+                    <option key={realm} value={realm} className="bg-[#0b101a] text-foreground font-mono">
+                      {realm === 'ALL' ? 'ALL REALMS' : realm}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <YggdrasilWorldTreeCanvas activeRealm={activeRealm} />
           </div>
+
 
           {/* Daily Recall Trivia */}
           <div className={`bg-card/60 backdrop-blur-md border border-white/10 rounded-2xl p-4 cyber-card space-y-2.5 transition-all duration-700 hover:opacity-100 ${
@@ -202,7 +228,7 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--neon-green))]" />
                 <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-[hsl(var(--neon-green))]">
-                  Daily Recall · Day {new Date().getDate()}
+                  Daily Recall Â· Day {new Date().getDate()}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
@@ -217,7 +243,7 @@ export const Dashboard: React.FC = () => {
                   }}
                   className="text-[11px] font-mono text-muted-foreground hover:text-foreground underline ml-2"
                 >
-                  Next →
+                  Next â†’
                 </button>
               </div>
             </div>
@@ -229,7 +255,7 @@ export const Dashboard: React.FC = () => {
             {showAnswer ? (
               <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/30 space-y-1 animate-in fade-in duration-200">
                 <p className="text-xs font-mono font-bold text-primary">
-                  ✓ {currentTrivia.a}
+                  âœ“ {currentTrivia.a}
                 </p>
                 <p className="text-[11px] text-muted-foreground border-l-2 border-primary/50 pl-2">
                   {currentTrivia.takeaway}
@@ -352,117 +378,18 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
 
+
             {/* Knowledge Flow State & Mastery (from Analytics) */}
             {(activeSideTab === 'all' || activeSideTab === 'analytics') && (
-              <div className="space-y-4 pt-4 border-t border-border/40">
-                <div className="flex items-center justify-between" title="Visual breakdown of your note mastery levels">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <BarChart3 className="w-3 h-3 text-[hsl(var(--neon-blue))]" /> Knowledge Distribution
-                  </span>
-                  <button
-                    onClick={() => navigate('/analytics')}
-                    className="text-[10px] font-mono text-primary hover:underline flex items-center gap-0.5"
-                  >
-                    Full Analytics <ArrowUpRight className="w-3 h-3" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  {/* Modern CSS Conic Gradient Donut Chart */}
-                  <div 
-                    className="relative w-24 h-24 shrink-0 rounded-full flex items-center justify-center cursor-help"
-                    title={`Learning: ${learningNotes} | Reviewing: ${reviewingNotes} | Mastered: ${masteredNotes}`}
-                    style={{
-                      background: `conic-gradient(
-                        hsl(var(--neon-blue)) 0% ${(learningNotes / (totalNotesCount || 1)) * 100}%,
-                        hsl(var(--accent)) ${(learningNotes / (totalNotesCount || 1)) * 100}% ${((learningNotes + reviewingNotes) / (totalNotesCount || 1)) * 100}%,
-                        hsl(var(--neon-green)) ${((learningNotes + reviewingNotes) / (totalNotesCount || 1)) * 100}% 100%
-                      )`
-                    }}
-                  >
-                    {/* Inner Cutout (The Donut Hole) */}
-                    <div className="absolute inset-2 bg-[#060b14] rounded-full flex flex-col items-center justify-center border border-white/5">
-                      <span className="text-xl font-bold font-mono text-foreground">{masteryPercentage}%</span>
-                      <span className="text-[8px] uppercase tracking-widest text-muted-foreground">Mastery</span>
-                    </div>
-                  </div>
-
-                  {/* Legend */}
-                  <div className="flex-1 space-y-2.5">
-                    <div className="flex items-center justify-between text-[11px] font-mono cursor-help" title="Notes currently being drafted or actively researched">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[hsl(var(--neon-blue))]" />
-                        <span className="text-muted-foreground hover:text-[hsl(var(--neon-blue))] transition-colors">Learning</span>
-                      </div>
-                      <span className="font-bold text-foreground">{learningNotes}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] font-mono cursor-help" title="Notes pending memorization or spaced repetition review">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[hsl(var(--accent))]" />
-                        <span className="text-muted-foreground hover:text-[hsl(var(--accent))] transition-colors">Reviewing</span>
-                      </div>
-                      <span className="font-bold text-foreground">{reviewingNotes}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] font-mono cursor-help" title="Notes fully committed to long-term memory">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[hsl(var(--neon-green))]" />
-                        <span className="text-muted-foreground hover:text-[hsl(var(--neon-green))] transition-colors">Mastered</span>
-                      </div>
-                      <span className="font-bold text-foreground">{masteredNotes}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress by Topic list */}
-                <div className="space-y-2 pt-2 border-t border-border/30">
-                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground" title="Granular mastery progress for each active topic">
-                    <span>TOPIC PROGRESS</span>
-                    <button onClick={() => navigate('/topics')} className="text-primary hover:underline">
-                      Manage ({topics.length})
-                    </button>
-                  </div>
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                    {topics.map(topic => {
-                      const tNotes = notes.filter(n => n.topicId === topic.id);
-                      const mNotes = tNotes.filter(n => n.status === 'mastered').length;
-                      const pct = tNotes.length ? Math.round((mNotes / tNotes.length) * 100) : 0;
-                      return (
-                        <div
-                          key={topic.id}
-                          title={`Click to manage ${topic.name}. ${mNotes} of ${tNotes.length} notes mastered.`}
-                          onClick={() => { sounds.playClick(); navigate(`/topics/${topic.id}`); }}
-                          className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-border/30 cursor-pointer space-y-1 transition-colors"
-                        >
-                          <div className="flex justify-between text-[10px] font-mono">
-                            <span className="text-foreground font-medium truncate">{topic.name}</span>
-                            <span className="text-primary font-bold">{pct}%</span>
-                          </div>
-                          <div className="h-1 rounded-full bg-secondary/50 overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-primary to-[hsl(var(--neon-green))]" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Streak Badge */}
-                <div 
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-[hsl(var(--neon-green)/0.3)] bg-[hsl(var(--neon-green)/0.06)] cursor-help"
-                  title="Daily consistency streak. You have added or reviewed notes for 14 consecutive days!"
-                >
-                  <div className="flex items-center gap-2">
-                    <Flame className="w-5 h-5 text-[hsl(var(--neon-green))] animate-pulse" />
-                    <div>
-                      <p className="text-xs font-heading font-bold text-foreground">14-Day Streak</p>
-                      <p className="text-[9px] font-mono text-muted-foreground">Digital tree thriving</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-mono font-bold text-[hsl(var(--neon-green))]">ACTIVE</span>
-                  </div>
-                </div>
-              </div>
+              <KnowledgeDistribution
+                learningNotes={learningNotes}
+                reviewingNotes={reviewingNotes}
+                masteredNotes={masteredNotes}
+                totalNotesCount={totalNotesCount}
+                masteryPercentage={masteryPercentage}
+                topics={topics}
+                notes={notes}
+              />
             )}
           </div>
         </div>
