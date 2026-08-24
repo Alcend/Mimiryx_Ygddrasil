@@ -4,22 +4,23 @@ import { AppProvider } from './context/AppContext';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
-const NotesPage = React.lazy(() => import('./pages/NotesPage').then(module => ({ default: module.NotesPage })));
-const NoteDetailPage = React.lazy(() => import('./pages/NoteDetailPage').then(module => ({ default: module.NoteDetailPage })));
-import { TopicsPage } from './pages/TopicsPage';
-import { TopicDetailPage } from './pages/TopicDetailPage';
-import { LabsPage } from './pages/LabsPage';
-import { LabDetailPage } from './pages/LabDetailPage';
-const BoardPage = React.lazy(() => import('./pages/BoardPage').then(module => ({ default: module.BoardPage })));
-import { MonitorPage } from './pages/MonitorPage';
-import { AssistantPage } from './pages/AssistantPage';
-import { TutorPage } from './pages/TutorPage';
-import { AIAgentPage } from './pages/AIAgentPage';
-import { DataJourneyPage } from './pages/DataJourneyPage';
-import { TemplatesPage } from './pages/TemplatesPage';
-const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage').then(module => ({ default: module.AnalyticsPage })));
-const TopicCreatorPage = React.lazy(() => import('./pages/TopicCreatorPage').then(module => ({ default: module.TopicCreatorPage })));
+// Dynamic route-level code splitting for all pages
+const Dashboard = React.lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const NotesPage = React.lazy(() => import('./pages/NotesPage').then(m => ({ default: m.NotesPage })));
+const NoteDetailPage = React.lazy(() => import('./pages/NoteDetailPage').then(m => ({ default: m.NoteDetailPage })));
+const TopicsPage = React.lazy(() => import('./pages/TopicsPage').then(m => ({ default: m.TopicsPage })));
+const TopicDetailPage = React.lazy(() => import('./pages/TopicDetailPage').then(m => ({ default: m.TopicDetailPage })));
+const LabsPage = React.lazy(() => import('./pages/LabsPage').then(m => ({ default: m.LabsPage })));
+const LabDetailPage = React.lazy(() => import('./pages/LabDetailPage').then(m => ({ default: m.LabDetailPage })));
+const BoardPage = React.lazy(() => import('./pages/BoardPage').then(m => ({ default: m.BoardPage })));
+const MonitorPage = React.lazy(() => import('./pages/MonitorPage').then(m => ({ default: m.MonitorPage })));
+const AssistantPage = React.lazy(() => import('./pages/AssistantPage').then(m => ({ default: m.AssistantPage })));
+const TutorPage = React.lazy(() => import('./pages/TutorPage').then(m => ({ default: m.TutorPage })));
+const AIAgentPage = React.lazy(() => import('./pages/AIAgentPage').then(m => ({ default: m.AIAgentPage })));
+const DataJourneyPage = React.lazy(() => import('./pages/DataJourneyPage').then(m => ({ default: m.DataJourneyPage })));
+const TemplatesPage = React.lazy(() => import('./pages/TemplatesPage').then(m => ({ default: m.TemplatesPage })));
+const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+const TopicCreatorPage = React.lazy(() => import('./pages/TopicCreatorPage').then(m => ({ default: m.TopicCreatorPage })));
 
 export const App: React.FC = () => {
   return (

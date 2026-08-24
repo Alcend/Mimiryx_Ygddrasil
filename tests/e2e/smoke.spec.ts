@@ -21,10 +21,10 @@ test('App navigation and topic resolution', async ({ page }) => {
 test('Settings Modal and Diagnostics flow', async ({ page }) => {
   await page.goto('/');
 
-  // Open Settings Modal
-  const settingsBtn = page.locator('button[title*="Settings"], button:has(.lucide-settings), [aria-label*="Settings"]');
+  // Click Settings button in Header
+  const settingsBtn = page.locator('button:has(.lucide-settings), [title*="Settings"], button:has-text("Settings")');
   if (await settingsBtn.count() > 0) {
     await settingsBtn.first().click();
-    await expect(page.locator('text=Neural Settings').or(page.locator('text=API Key Pool'))).toBeVisible();
+    await expect(page.locator('text=Core Neural Settings')).toBeVisible();
   }
 });

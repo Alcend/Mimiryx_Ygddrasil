@@ -12,6 +12,24 @@ export default defineConfig({
       brotliSize: true,
     }),
   ],
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-markdown': [
+            'react-markdown',
+            'remark-gfm',
+            'remark-math',
+            'rehype-katex',
+            'rehype-sanitize',
+            'katex',
+          ],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     host: true,
