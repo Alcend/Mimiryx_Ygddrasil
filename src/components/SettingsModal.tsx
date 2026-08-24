@@ -1,3 +1,4 @@
+import { checkGeminiConfiguration } from '../utils/aiConfig';
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Key, ShieldCheck, ShieldAlert, Sparkles, Activity, AlertTriangle, CheckCircle2 } from 'lucide-react';
@@ -152,7 +153,7 @@ export const SettingsModal: React.FC = () => {
                             sounds.playClick();
                             try {
                               alert("Running Diagnostics on Key " + (i+1) + "...");
-                              const { checkGeminiConfiguration } = await import('../utils/aiConfig');
+                              // statically imported
                               const result = await checkGeminiConfiguration(key);
                               if (result.isValid) {
                                 alert("Success! Key is valid.\nModels verified:\n" + result.availableModels.join('\n'));

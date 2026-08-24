@@ -13,7 +13,7 @@ import {
 import { sounds } from '../utils/audio';
 import { BookReader } from '../components/BookReader';
 import { Note } from '../types';
-import { resolveNoteTopic } from './NotesPage';
+import { resolveNoteTopic } from '../utils/topicHelpers';
 
 export const TopicDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

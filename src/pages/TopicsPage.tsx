@@ -15,7 +15,7 @@ import {
   FolderTree,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
-import { resolveNoteTopic } from './NotesPage';
+import { resolveNoteTopic } from '../utils/topicHelpers';
 import { Topic } from '../types';
 
 export const TopicsPage: React.FC = () => {
