@@ -41,7 +41,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
   const [activeRecallMode, setActiveRecallMode] = useState(false);
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
 
-  const pages = note.content.split('---').map(p => p.trim()).filter(Boolean);
+  const pages = note.content.split('[PAGE_BREAK]').map(p => p.trim()).filter(Boolean);
   const pagesCount = pages.length;
 
   // Keyboard navigation for pages
