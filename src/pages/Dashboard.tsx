@@ -98,189 +98,41 @@ export const Dashboard: React.FC = () => {
   const currentTrivia = TRIVIA_LIST[triviaIdx % TRIVIA_LIST.length];
 
   return (
-    <div className="space-y-4 max-w-[1600px] mx-auto pb-10 relative">
+    <div className="flex flex-col flex-1 min-h-0 w-full max-w-[1600px] mx-auto relative gap-3">
       <AnalyticsGuideBanner />
 
-      {/* Top Banner Stats Row */}
-      <div className={`grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 relative z-10 transition-all duration-700 ease-in-out hover:opacity-100 ${
-        isIdle ? 'opacity-10' : 'opacity-100'
-      }`}>
-        {/* Card 1: Notes Vault (Clickable) */}
-        <button 
-          onClick={() => { sounds.playClick(); navigate('/notes'); }}
-          className="bg-card/70 backdrop-blur-md border border-white/10 rounded-xl p-3 flex items-center gap-3 text-left hover:bg-white/5 hover:border-primary/40 transition-colors group cursor-pointer"
-          title="Go to Notes Vault"
-        >
-          <div className="p-2 rounded-lg bg-[hsl(var(--neon-blue)/0.12)] border border-[hsl(var(--neon-blue)/0.3)] text-[hsl(var(--neon-blue))] group-hover:scale-110 transition-transform">
-            <BookOpen className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Total Notes</p>
-            <p className="text-lg font-bold text-foreground font-mono">{totalNotesCount}</p>
-          </div>
-        </button>
-
-        {/* Card 2: Neural Labs (Clickable) */}
-        <button 
-          onClick={() => { sounds.playClick(); navigate('/labs'); }}
-          className="bg-card/70 backdrop-blur-md border border-white/10 rounded-xl p-3 flex items-center gap-3 text-left hover:bg-white/5 hover:border-[hsl(var(--neon-green))]/40 transition-colors group cursor-pointer"
-          title="Go to Neural Labs"
-        >
-          <div className="p-2 rounded-lg bg-[hsl(var(--neon-green)/0.12)] border border-[hsl(var(--neon-green)/0.3)] text-[hsl(var(--neon-green))] group-hover:scale-110 transition-transform">
-            <FlaskConical className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Labs Done</p>
-            <p className="text-lg font-bold text-foreground font-mono">{completedLabsCount}</p>
-          </div>
-        </button>
-
-        {/* Card 3: Neural Topics (Clickable) */}
-        <button 
-          onClick={() => { sounds.playClick(); navigate('/topics'); }}
-          className="bg-card/70 backdrop-blur-md border border-white/10 rounded-xl p-3 flex items-center gap-3 text-left hover:bg-white/5 hover:border-[hsl(var(--neon-purple))]/40 transition-colors group cursor-pointer"
-          title="Go to Neural Topics"
-        >
-          <div className="p-2 rounded-lg bg-[hsl(var(--neon-purple)/0.12)] border border-[hsl(var(--neon-purple)/0.3)] text-[hsl(var(--neon-purple))] group-hover:scale-110 transition-transform">
-            <Boxes className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Active Topics</p>
-            <p className="text-lg font-bold text-foreground font-mono">{topics.length}</p>
-          </div>
-        </button>
-
-        {/* Card 4: Mastery Status */}
-        <div className="bg-card/70 backdrop-blur-md border border-white/10 rounded-xl p-3 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-[hsl(var(--neon-amber)/0.12)] border border-[hsl(var(--neon-amber)/0.3)] text-[hsl(var(--neon-amber))]">
-            <Trophy className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Mastery</p>
-            <p className="text-lg font-bold text-foreground font-mono">{masteryPercentage}%</p>
-          </div>
-        </div>
-
-        {/* Card 5: Sync Status */}
-        <div className="hidden lg:flex bg-card/70 backdrop-blur-md border border-white/10 rounded-xl p-3 items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            <Radio className="w-4 h-4 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              <p className="text-xs font-mono font-bold text-emerald-400">ONLINE</p>
-            </div>
-            <p className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">RTT 0.42ms Â· 4 Nodes</p>
-          </div>
-        </div>
-
-        {/* Card 6: Live Clock Card */}
-        <div className="hidden lg:flex bg-card/70 backdrop-blur-md border border-white/10 rounded-xl p-3 items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 border border-primary/30 text-primary">
-            <Clock className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <p className="text-sm font-mono font-bold text-primary">
-                {currentTime.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </p>
-            </div>
-            <p className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">LOCAL SYSTEM TIME</p>
-          </div>
-        </div>
-      </div>
-
       {/* Main Unified Arena: Tree (Left) + Analytics & Monitor Rail (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
         {/* Left Column: Digital Yggdrasil Tree Organism + Daily Knowledge Recall */}
-        <div className="space-y-4 lg:col-span-8">
+        <div className={`flex flex-col min-h-0 gap-3 lg:col-span-8 transition-all duration-700 ease-in-out ${isIdle ? 'opacity-10' : 'opacity-100'}`}>
 
 
 
           {/* Yggdrasil Canvas Viewport */}
-          <div className="w-full relative rounded-2xl overflow-hidden border border-border/40 cyber-card shadow-[0_0_15px_rgba(0,240,255,0.05)]">
-            <div className="absolute top-4 left-4 z-20">
-              <div className="flex items-center gap-2 bg-black/70 backdrop-blur-md border border-white/10 p-1.5 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-                <span className="text-[10px] font-mono text-muted-foreground px-2 uppercase tracking-widest hidden sm:inline-block">Filter Realm:</span>
-                <select
-                  value={activeRealm}
-                  onChange={(e) => { sounds.playClick(); setActiveRealm(e.target.value); }}
-                  className="bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 transition-all text-xs font-mono font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer uppercase tracking-wider"
-                >
-                  {availableRealms.map(realm => (
-                    <option key={realm} value={realm} className="bg-[#0b101a] text-foreground font-mono">
-                      {realm === 'ALL' ? 'ALL REALMS' : realm}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="w-full relative flex-1 min-h-0 rounded-2xl overflow-hidden border border-border/40 cyber-card shadow-[0_0_15px_rgba(0,240,255,0.05)]">
+            <div className="absolute bottom-4 left-4 z-20">
+              <select
+                value={activeRealm}
+                onChange={(e) => { sounds.playClick(); setActiveRealm(e.target.value); }}
+                className="bg-black/80 backdrop-blur-md border border-white/10 text-primary hover:bg-black hover:border-primary/50 transition-all text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer uppercase tracking-wider shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+              >
+                {availableRealms.map(realm => (
+                  <option key={realm} value={realm} className="bg-[#0b101a] text-foreground font-mono">
+                    {realm === 'ALL' ? 'ALL REALMS' : realm}
+                  </option>
+                ))}
+              </select>
             </div>
             <YggdrasilWorldTreeCanvas activeRealm={activeRealm} />
-          </div>
-
-
-          {/* Daily Recall Trivia */}
-          <div className={`bg-card/60 backdrop-blur-md border border-white/10 rounded-2xl p-4 cyber-card space-y-2.5 transition-all duration-700 hover:opacity-100 ${
-            isIdle ? 'opacity-10' : 'opacity-100'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--neon-green))]" />
-                <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-[hsl(var(--neon-green))]">
-                  Daily Recall Â· Day {new Date().getDate()}
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full border border-primary/40 bg-primary/10 text-primary">
-                  {currentTrivia.difficulty}
-                </span>
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    setTriviaIdx(i => i + 1);
-                    setShowAnswer(false);
-                  }}
-                  className="text-[11px] font-mono text-muted-foreground hover:text-foreground underline ml-2"
-                >
-                  Next â†’
-                </button>
-              </div>
-            </div>
-
-            <p className="text-xs font-medium text-foreground">
-              {currentTrivia.q}
-            </p>
-
-            {showAnswer ? (
-              <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/30 space-y-1 animate-in fade-in duration-200">
-                <p className="text-xs font-mono font-bold text-primary">
-                  âœ“ {currentTrivia.a}
-                </p>
-                <p className="text-[11px] text-muted-foreground border-l-2 border-primary/50 pl-2">
-                  {currentTrivia.takeaway}
-                </p>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  sounds.playSuccess();
-                  setShowAnswer(true);
-                }}
-                className="px-2.5 py-1 rounded-lg border border-border hover:border-primary/40 bg-white/5 text-[11px] font-mono font-semibold text-foreground flex items-center gap-1.5 transition-colors"
-              >
-                <Zap className="w-3 h-3 text-primary" /> Reveal Answer
-              </button>
-            )}
           </div>
         </div>
 
         {/* Right Column: Combined Telemetry & Analytics Rail */}
-        <div className={`lg:col-span-4 space-y-4 transition-all duration-700 hover:opacity-100 ${
+        <div className={`lg:col-span-4 flex flex-col min-h-0 gap-3 overflow-y-auto transition-all duration-700 hover:opacity-100 ${
           isIdle ? 'opacity-10' : 'opacity-100'
         }`}>
           {/* Header Controls for Rail */}
-          <div className="bg-card/70 backdrop-blur border border-white/10 rounded-2xl p-4 cyber-card space-y-3.5">
+          <div className="bg-card/70 backdrop-blur border border-white/10 rounded-2xl p-4 cyber-card flex flex-col min-h-0 gap-3 h-full">
             <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-primary" />
@@ -300,16 +152,6 @@ export const Dashboard: React.FC = () => {
                   All
                 </button>
                 <button
-                  onClick={() => { sounds.playClick(); setActiveSideTab('telemetry'); }}
-                  className={`px-2 py-0.5 rounded transition-all ${
-                    activeSideTab === 'telemetry'
-                      ? 'bg-primary/20 text-primary border border-primary/40'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Telemetry
-                </button>
-                <button
                   onClick={() => { sounds.playClick(); setActiveSideTab('analytics'); }}
                   className={`px-2 py-0.5 rounded transition-all ${
                     activeSideTab === 'analytics'
@@ -319,8 +161,59 @@ export const Dashboard: React.FC = () => {
                 >
                   Analytics
                 </button>
+                <button
+                  onClick={() => { sounds.playClick(); setActiveSideTab('telemetry'); }}
+                  className={`px-2 py-0.5 rounded transition-all ${
+                    activeSideTab === 'telemetry'
+                      ? 'bg-primary/20 text-primary border border-primary/40'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Telemetry
+                </button>
               </div>
             </div>
+
+            {/* Compact Core Stats */}
+            <div className="grid grid-cols-2 gap-2 pb-3 border-b border-border/20 shrink-0">
+              <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => { sounds.playClick(); navigate('/notes'); }}>
+                <div className="flex items-center gap-1.5"><BookOpen className="w-3 h-3 text-[hsl(var(--neon-blue))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Notes</span></div>
+                <span className="text-xs font-bold font-mono text-foreground">{totalNotesCount}</span>
+              </div>
+              <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5 cursor-pointer hover:border-[hsl(var(--neon-green))]/40 transition-colors" onClick={() => { sounds.playClick(); navigate('/labs'); }}>
+                <div className="flex items-center gap-1.5"><FlaskConical className="w-3 h-3 text-[hsl(var(--neon-green))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Labs</span></div>
+                <span className="text-xs font-bold font-mono text-foreground">{completedLabsCount}</span>
+              </div>
+              <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5 cursor-pointer hover:border-[hsl(var(--neon-purple))]/40 transition-colors" onClick={() => { sounds.playClick(); navigate('/topics'); }}>
+                <div className="flex items-center gap-1.5"><Boxes className="w-3 h-3 text-[hsl(var(--neon-purple))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Topics</span></div>
+                <span className="text-xs font-bold font-mono text-foreground">{topics.length}</span>
+              </div>
+              <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5">
+                <div className="flex items-center gap-1.5"><Trophy className="w-3 h-3 text-[hsl(var(--neon-amber))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Mastery</span></div>
+                <span className="text-xs font-bold font-mono text-foreground">{masteryPercentage}%</span>
+              </div>
+              <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5">
+                <div className="flex items-center gap-1.5"><Radio className="w-3 h-3 text-emerald-400 animate-pulse" /><span className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest">Status</span></div>
+                <span className="text-[9px] font-bold font-mono text-emerald-400">ONLINE</span>
+              </div>
+              <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5">
+                <div className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-primary" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Local</span></div>
+                <span className="text-[9px] font-bold font-mono text-foreground">{currentTime.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            </div>
+
+                        {/* Knowledge Flow State & Mastery (from Analytics) */}
+            {(activeSideTab === 'all' || activeSideTab === 'analytics') && (
+              <KnowledgeDistribution
+                learningNotes={learningNotes}
+                reviewingNotes={reviewingNotes}
+                masteredNotes={masteredNotes}
+                totalNotesCount={totalNotesCount}
+                masteryPercentage={masteryPercentage}
+                topics={topics}
+                notes={notes}
+              />
+            )}
 
             {/* Telemetry Metrics Section (from Monitor) */}
             {(activeSideTab === 'all' || activeSideTab === 'telemetry') && (
@@ -379,18 +272,7 @@ export const Dashboard: React.FC = () => {
             )}
 
 
-            {/* Knowledge Flow State & Mastery (from Analytics) */}
-            {(activeSideTab === 'all' || activeSideTab === 'analytics') && (
-              <KnowledgeDistribution
-                learningNotes={learningNotes}
-                reviewingNotes={reviewingNotes}
-                masteredNotes={masteredNotes}
-                totalNotesCount={totalNotesCount}
-                masteryPercentage={masteryPercentage}
-                topics={topics}
-                notes={notes}
-              />
-            )}
+
           </div>
         </div>
       </div>

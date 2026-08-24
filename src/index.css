@@ -1,138 +1,274 @@
-﻿@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  /* Default Cyan Theme */
-  --background: 224 71% 4%;
-  --foreground: 210 40% 98%;
-  
-  --card: 224 71% 6%;
-  --card-foreground: 210 40% 98%;
-  
-  --popover: 224 71% 6%;
-  --popover-foreground: 210 40% 98%;
-  
-  --primary: 180 100% 50%;
-  --primary-foreground: 224 71% 4%;
-  
-  --secondary: 215 28% 17%;
-  --secondary-foreground: 210 40% 98%;
-  
-  --muted: 215 28% 12%;
-  --muted-foreground: 215 20% 65%;
-  
-  --accent: 160 85% 45%;
-  --accent-foreground: 210 40% 98%;
-  
-  --border: 215 28% 15%;
-  --input: 215 28% 15%;
-  --ring: 180 100% 50%;
-  
-  --sidebar: 224 71% 5%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 215 28% 12%;
-  --sidebar-accent: 215 28% 12%;
-
-  --neon-blue: 180 100% 50%;
-  --neon-green: 135 100% 50%;
-  --neon-purple: 265 90% 68%;
-  --neon-amber: 38 100% 56%;
-}
-
-/* Green Theme */
-[data-theme="green"] {
-  --primary: 135 100% 50%;
-  --primary-foreground: 224 71% 4%;
-  --accent: 90 90% 55%;
-  --ring: 135 100% 50%;
-}
-
-/* Purple Theme */
-[data-theme="purple"] {
-  --primary: 265 90% 68%;
-  --primary-foreground: 224 71% 4%;
-  --accent: 290 80% 62%;
-  --ring: 265 90% 68%;
-}
-
-/* Amber Theme */
-[data-theme="amber"] {
-  --primary: 38 100% 56%;
-  --primary-foreground: 224 71% 4%;
-  --accent: 20 95% 56%;
-  --ring: 38 100% 56%;
-}
-
-/* Custom Cyberpunk & Glass styling */
-.cyber-glass {
-  background: rgba(7, 10, 20, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid hsl(var(--border) / 0.8);
-}
-
-.glass-sidebar {
-  background: rgba(7, 10, 20, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.glass-header {
-  background: rgba(7, 10, 20, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-.cyber-card {
-  background: linear-gradient(135deg, rgba(13, 19, 33, 0.8) 0%, rgba(8, 12, 22, 0.95) 100%);
-  border: 1px solid hsl(var(--border));
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  transition: all 0.25s ease;
-}
-
-.cyber-card:hover {
-  border-color: hsl(var(--primary) / 0.4);
-  box-shadow: 0 0 25px -5px hsl(var(--primary) / 0.2);
-}
-
-.neon-text {
-  text-shadow: 0 0 12px hsl(var(--primary) / 0.6), 0 0 24px hsl(var(--primary) / 0.3);
-}
-
-.neon-border {
-  border-color: hsl(var(--primary) / 0.6);
-  box-shadow: 0 0 15px -3px hsl(var(--primary) / 0.35);
-}
-
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.5);
-}
-
-.markdown-prose p { margin-bottom: 0.5rem; }
-.markdown-prose p:last-child { margin-bottom: 0; }
-.markdown-prose strong { color: hsl(var(--primary)); }
-.markdown-prose ul { list-style-type: disc; padding-left: 1rem; margin-bottom: 0.5rem; }
-.markdown-prose ol { list-style-type: decimal; padding-left: 1rem; margin-bottom: 0.5rem; }
-.markdown-prose li { margin-bottom: 0.25rem; }
-.markdown-prose code { background: rgba(0,0,0,0.3); padding: 0.1rem 0.3rem; border-radius: 0.25rem; }
-.markdown-prose pre { background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.5rem; }
-.markdown-prose pre code { background: transparent; padding: 0; }
-
-
-
+@import 'katex/dist/katex.min.css';
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+
+
+:root {
+
+  /* Default Cyan Theme */
+
+  --background: 224 71% 4%;
+
+  --foreground: 210 40% 98%;
+
+  
+
+  --card: 224 71% 6%;
+
+  --card-foreground: 210 40% 98%;
+
+  
+
+  --popover: 224 71% 6%;
+
+  --popover-foreground: 210 40% 98%;
+
+  
+
+  --primary: 180 100% 50%;
+
+  --primary-foreground: 224 71% 4%;
+
+  
+
+  --secondary: 215 28% 17%;
+
+  --secondary-foreground: 210 40% 98%;
+
+  
+
+  --muted: 215 28% 12%;
+
+  --muted-foreground: 215 20% 65%;
+
+  
+
+  --accent: 160 85% 45%;
+
+  --accent-foreground: 210 40% 98%;
+
+  
+
+  --border: 215 28% 15%;
+
+  --input: 215 28% 15%;
+
+  --ring: 180 100% 50%;
+
+  
+
+  --sidebar: 224 71% 5%;
+
+  --sidebar-foreground: 210 40% 98%;
+
+  --sidebar-border: 215 28% 12%;
+
+  --sidebar-accent: 215 28% 12%;
+
+
+
+  --neon-blue: 180 100% 50%;
+
+  --neon-green: 135 100% 50%;
+
+  --neon-purple: 265 90% 68%;
+
+  --neon-amber: 38 100% 56%;
+
+}
+
+
+
+/* Green Theme */
+
+[data-theme="green"] {
+
+  --primary: 135 100% 50%;
+
+  --primary-foreground: 224 71% 4%;
+
+  --accent: 90 90% 55%;
+
+  --ring: 135 100% 50%;
+
+}
+
+
+
+/* Purple Theme */
+
+[data-theme="purple"] {
+
+  --primary: 265 90% 68%;
+
+  --primary-foreground: 224 71% 4%;
+
+  --accent: 290 80% 62%;
+
+  --ring: 265 90% 68%;
+
+}
+
+
+
+/* Amber Theme */
+
+[data-theme="amber"] {
+
+  --primary: 38 100% 56%;
+
+  --primary-foreground: 224 71% 4%;
+
+  --accent: 20 95% 56%;
+
+  --ring: 38 100% 56%;
+
+}
+
+
+
+/* Custom Cyberpunk & Glass styling */
+
+.cyber-glass {
+
+  background: rgba(7, 10, 20, 0.6);
+
+  backdrop-filter: blur(16px);
+
+  -webkit-backdrop-filter: blur(16px);
+
+  border: 1px solid hsl(var(--border) / 0.8);
+
+}
+
+
+
+.glass-sidebar {
+
+  background: rgba(7, 10, 20, 0.65);
+
+  backdrop-filter: blur(20px);
+
+  -webkit-backdrop-filter: blur(20px);
+
+}
+
+
+
+.glass-header {
+
+  background: rgba(7, 10, 20, 0.55);
+
+  backdrop-filter: blur(16px);
+
+  -webkit-backdrop-filter: blur(16px);
+
+}
+
+
+
+.cyber-card {
+
+  background: linear-gradient(135deg, rgba(13, 19, 33, 0.8) 0%, rgba(8, 12, 22, 0.95) 100%);
+
+  border: 1px solid hsl(var(--border));
+
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+
+  transition: all 0.25s ease;
+
+}
+
+
+
+.cyber-card:hover {
+
+  border-color: hsl(var(--primary) / 0.4);
+
+  box-shadow: 0 0 25px -5px hsl(var(--primary) / 0.2);
+
+}
+
+
+
+.neon-text {
+
+  text-shadow: 0 0 12px hsl(var(--primary) / 0.6), 0 0 24px hsl(var(--primary) / 0.3);
+
+}
+
+
+
+.neon-border {
+
+  border-color: hsl(var(--primary) / 0.6);
+
+  box-shadow: 0 0 15px -3px hsl(var(--primary) / 0.35);
+
+}
+
+
+
+/* Custom scrollbars */
+
+::-webkit-scrollbar {
+
+  width: 6px;
+
+  height: 6px;
+
+}
+
+::-webkit-scrollbar-track {
+
+  background: hsl(var(--background));
+
+}
+
+::-webkit-scrollbar-thumb {
+
+  background: hsl(var(--muted));
+
+  border-radius: 3px;
+
+}
+
+::-webkit-scrollbar-thumb:hover {
+
+  background: hsl(var(--primary) / 0.5);
+
+}
+
+
+
+.markdown-prose p { margin-bottom: 0.5rem; }
+
+.markdown-prose p:last-child { margin-bottom: 0; }
+
+.markdown-prose strong { color: hsl(var(--primary)); }
+
+.markdown-prose ul { list-style-type: disc; padding-left: 1rem; margin-bottom: 0.5rem; }
+
+.markdown-prose ol { list-style-type: decimal; padding-left: 1rem; margin-bottom: 0.5rem; }
+
+.markdown-prose li { margin-bottom: 0.25rem; }
+
+.markdown-prose code { background: rgba(0,0,0,0.3); padding: 0.1rem 0.3rem; border-radius: 0.25rem; }
+
+.markdown-prose pre { background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.5rem; }
+
+.markdown-prose pre code { background: transparent; padding: 0; }
+
+
+
+
+
+
+
 .book-flow { column-width: calc(100% - 2rem); column-gap: 3rem; height: calc(100vh - 350px); overflow-x: auto; overflow-y: hidden; word-break: break-word; }
 
 .book-flow {
@@ -152,4 +288,4 @@
   margin: 0;
   padding: 0;
 }
-@import 'katex/dist/katex.min.css';
+

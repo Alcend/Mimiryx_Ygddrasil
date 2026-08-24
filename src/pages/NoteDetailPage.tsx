@@ -98,7 +98,8 @@ export const NoteDetailPage: React.FC = () => {
       sounds.playSuccess();
     } catch (error: any) {
       sounds.playError();
-      alert(`Auto-Format Failed: ${error.message}`);
+      console.error('Auto-Format Error:', error);
+      setContent(content + '\n\n--- AI FORMATTING ERROR ---\n' + error.message);
     } finally {
       setIsFormatting(false);
     }

@@ -1,18 +1,48 @@
+import { GEMINI_MODELS, GEMINI_API_VERSION, GeminiConfigurationError } from './aiConfig';
+export interface GroundingMetadata {
+  searchQueries?: string[];
+  webUrls?: string[];
+}
+
+export class WeakGroundingError extends Error {
+  constructor(message: string = 'Insufficient grounding data found.') {
+    super(message);
+    this.name = 'WeakGroundingError';
+  }
+}
+
+const depletedKeys = new Set<string>();
+
+export const getActiveKey = (keysStr: string): string => {
+  if (!keysStr) return '';
+  const keys = keysStr.split(/[,\s]+/).map(k => k.trim()).filter(Boolean);
+  const availableKeys = keys.filter(k => !depletedKeys.has(k));
+  
+  if (availableKeys.length === 0) {
+    depletedKeys.clear();
+    if (keys.length === 0) return '';
+    return keys[Math.floor(Math.random() * keys.length)];
+  }
+  
+  return availableKeys[Math.floor(Math.random() * availableKeys.length)];
+};
+
+export const markKeyDepleted = (key: string) => {
+  if (key) {
+    depletedKeys.add(key);
+    console.warn("Key depleted! Total depleted:", depletedKeys.size);
+  }
+};
+
 export const generateGeminiResponse = async (prompt: string, apiKey: string): Promise<string> => {
   if (!apiKey) throw new Error('No API key provided.');
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+  const activeKey = getActiveKey(apiKey);
+  if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
+  console.log('[Gemini] Resolved key:', activeKey.slice(0, 6) + '...' + activeKey.slice(-4), '| Length:', activeKey.length);
+  const endpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.research}:generateContent?key=${activeKey}`;
 
   const payload = {
-    contents: [
-      {
-        parts: [
-          {
-            text: prompt
-          }
-        ]
-      }
-    ],
+    contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.7,
       topK: 40,
@@ -23,14 +53,15 @@ export const generateGeminiResponse = async (prompt: string, apiKey: string): Pr
 
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
+    if (response.status === 429 || response.status === 403) {
+      markKeyDepleted(activeKey);
+    }
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || 'Failed to communicate with Gemini Oracle.');
   }
 
@@ -66,7 +97,6 @@ ${userMessage}
   `.trim();
 };
 
-// Quick helper to construct the Note Expand prompt
 export const getNoteExpandPrompt = (title: string, currentContent: string) => {
   return `
 You are an expert AI knowledge synthesizer embedded in the MIMIRYX engine. The user is writing a study note.
@@ -103,4 +133,308 @@ CRITICAL REQUIREMENTS:
 Raw Content:
 "${currentContent}"
   `.trim();
+};
+
+export const streamResearch = async (
+  topic: string, 
+  apiKey: string, 
+  onChunk: (text: string) => void
+): Promise<{ text: string; grounding: GroundingMetadata }> => {
+  if (!apiKey) throw new Error('No API key provided.');
+
+  const payload = {
+    contents: [{ parts: [{ text: `Research this topic comprehensively: ${topic}. Provide historical context, technical details, current state of the art, and core concepts. Be extremely detailed.` }] }],
+    tools: [{ googleSearch: {} }],
+    generationConfig: {
+      temperature: 0.3,
+    }
+  };
+
+  let response: Response | undefined;
+  let retries = 2; // Reduced to minimize quota waste
+  while (retries > 0) {
+    const activeKey = getActiveKey(apiKey);
+    if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
+    console.log('[Gemini StreamResearch] Resolved key:', activeKey.slice(0, 6) + '...' + activeKey.slice(-4), '| Length:', activeKey.length);
+    const currentEndpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.research}:streamGenerateContent?alt=sse&key=${activeKey}`;
+    
+    if (retries <= 2 && (payload as any).tools) {
+      console.warn("Dropping Google Search tool due to persistent Quota errors...");
+      delete (payload as any).tools;
+    }
+
+    response = await fetch(currentEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    
+    const isQuotaError = response.status === 429 || response.status === 403 || response.status === 400;
+    if (isQuotaError) {
+      if (retries > 2) {
+        markKeyDepleted(activeKey);
+      }
+      await new Promise(r => setTimeout(r, 1000));
+      retries--;
+      continue;
+    }
+    break;
+  }
+
+  if (!response) throw new Error('Failed to connect to API after multiple retries.');
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || 'Failed to communicate with Gemini for research.');
+  }
+
+  if (!response.body) throw new Error('No response body');
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let fullText = '';
+  const grounding: GroundingMetadata = { searchQueries: [], webUrls: [] };
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    
+    buffer += decoder.decode(value, { stream: true });
+    
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const dataStr = line.slice(6).trim();
+        if (dataStr === '[DONE]') continue;
+        
+        try {
+          const parsed = JSON.parse(dataStr);
+          const candidate = parsed.candidates?.[0];
+          
+          if (candidate?.content?.parts?.[0]?.text) {
+            const chunk = candidate.content.parts[0].text;
+            fullText += chunk;
+            onChunk(chunk);
+          }
+
+          const meta = candidate?.groundingMetadata;
+          if (meta) {
+            if (meta.webSearchQueries) {
+              grounding.searchQueries = [...new Set([...(grounding.searchQueries || []), ...meta.webSearchQueries])];
+            }
+            if (meta.groundingChunks) {
+              const urls = meta.groundingChunks
+                .map((c: any) => c.web?.uri)
+                .filter(Boolean);
+              grounding.webUrls = [...new Set([...(grounding.webUrls || []), ...urls])];
+            }
+          }
+        } catch (e) {
+        }
+      }
+    }
+  }
+  
+  if ((payload as any).tools && (!grounding.webUrls || grounding.webUrls.length === 0)) {
+    console.warn('[Gemini] Weak grounding detected, continuing without grounding URLs.');
+  }
+  
+  return { text: fullText, grounding };
+};
+
+export const streamSynthesis = async (
+  rawResearch: string, 
+  apiKey: string, 
+  onChunk: (text: string) => void
+): Promise<string> => {
+  if (!apiKey) throw new Error('No API key provided.');
+
+  const sysPrompt = `You are a synthesis engine for a sci-fi knowledge app.
+Convert the raw research into a structured, highly-readable Markdown document.
+
+CRITICAL REQUIREMENTS:
+1. Include a short YAML frontmatter at the very top:
+---
+title: "Topic Title"
+tags: ["tag1", "tag2"]
+summary: "1-sentence summary"
+---
+2. Break the content into logical pages using "##" headers (required for pagination).
+3. Use Markdown headers (###), bullet points, and bold text.
+4. For Mathematical equations, use $$...$$ for block and $...$ for inline.
+5. If a code block spans pages, never break it mid-fence.
+6. Respond ONLY with the raw markdown. No conversational text.`;
+
+  const payload = {
+    contents: [
+      { parts: [{ text: `${sysPrompt}\n\nHere is the Raw Research to process:\n\n${rawResearch}` }] }
+    ],
+    generationConfig: { temperature: 0.2 }
+  };
+
+  let response: Response | undefined;
+  let retries = 2;
+  while (retries > 0) {
+    const activeKey = getActiveKey(apiKey);
+    if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
+    console.log('[Gemini StreamSynthesis] Resolved key:', activeKey.slice(0, 6) + '...' + activeKey.slice(-4), '| Length:', activeKey.length);
+    const currentEndpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.research}:streamGenerateContent?alt=sse&key=${activeKey}`;
+    response = await fetch(currentEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    
+    const isQuotaError = response.status === 429 || response.status === 403 || response.status === 400;
+    if (isQuotaError) {
+      markKeyDepleted(activeKey);
+      await new Promise(r => setTimeout(r, 1000));
+      retries--;
+      continue;
+    }
+    break;
+  }
+
+  if (!response) throw new Error('Failed to connect to API');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || 'Failed to synthesize.');
+  }
+  if (!response.body) throw new Error('No response body');
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let fullText = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    
+    buffer += decoder.decode(value, { stream: true });
+    
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const dataStr = line.slice(6).trim();
+        if (dataStr === '[DONE]') continue;
+        
+        try {
+          const parsed = JSON.parse(dataStr);
+          const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (chunk) {
+            fullText += chunk;
+            onChunk(chunk);
+          }
+        } catch (e) {}
+      }
+    }
+  }
+  
+  return fullText;
+};
+
+let cachedEmbeddingModel = '';
+
+export const getEmbedding = async (text: string, apiKey: string): Promise<number[]> => {
+  const activeKey = getActiveKey(apiKey);
+  
+  // Auto-discover the embedding model on first use to ensure we don't guess wrong
+  if (!cachedEmbeddingModel) {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models?key=${activeKey}`);
+    const listData = await listRes.json();
+    const models = listData.models || [];
+    const found = models.find((m: any) => m.supportedGenerationMethods?.includes('embedContent'));
+    if (found) {
+      cachedEmbeddingModel = found.name.replace('models/', '');
+    } else {
+      throw new Error('No embedding model found on this API key.');
+    }
+  }
+
+  const payload = {
+    model: cachedEmbeddingModel,
+    content: { parts: [{ text }] },
+    taskType: 'CLASSIFICATION',
+    outputDimensionality: 768
+  };
+
+  let retries = 2;
+  while (retries > 0) {
+    const endpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${cachedEmbeddingModel}:embedContent?key=${activeKey}`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const isQuotaError = response.status === 429 || response.status === 403 || response.status === 400;
+    if (isQuotaError) {
+      markKeyDepleted(activeKey);
+      await new Promise(r => setTimeout(r, 1000));
+      retries--;
+      continue;
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to get embedding.');
+    }
+
+    const data = await response.json();
+    return data.embedding.values;
+  }
+  throw new Error('API Quota Exceeded (429) after multiple retries.');
+};
+
+export const batchGetEmbeddings = async (texts: string[], apiKey: string): Promise<number[][]> => {
+  const activeKey = getActiveKey(apiKey);
+
+  if (!cachedEmbeddingModel) {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models?key=${activeKey}`);
+    const listData = await listRes.json();
+    const models = listData.models || [];
+    const found = models.find((m: any) => m.supportedGenerationMethods?.includes('embedContent'));
+    if (found) {
+      cachedEmbeddingModel = found.name.replace('models/', '');
+    } else {
+      throw new Error('No embedding model found on this API key.');
+    }
+  }
+
+  const requests = texts.map(t => ({
+    model: cachedEmbeddingModel,
+    content: { parts: [{ text: t }] }
+  }));
+
+  let retries = 2;
+  while (retries > 0) {
+    const endpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${cachedEmbeddingModel}:batchEmbedContents?key=${activeKey}`;
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests })
+    });
+    
+    const isQuotaError = res.status === 429 || res.status === 403 || res.status === 400;
+    if (isQuotaError) {
+      markKeyDepleted(activeKey);
+      await new Promise(r => setTimeout(r, 1000));
+      retries--;
+      continue;
+    }
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to get batch embeddings.');
+    }
+    const data = await res.json();
+    return data.embeddings.map((e: any) => e.values);
+  }
+  throw new Error('API Quota Exceeded (429) after multiple retries.');
 };

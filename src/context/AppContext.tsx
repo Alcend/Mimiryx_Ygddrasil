@@ -110,8 +110,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return saved !== null ? saved === 'true' : true;
   });
 
-  const [customBg, setCustomBgState] = useState<string | null>(() => {
-    return localStorage.getItem(STORAGE_KEYS.CUSTOM_BG);
+    const [customBg, setCustomBgState] = useState<string | null>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.CUSTOM_BG);
+    if (saved === 'none') return null;
+    if (saved) return saved;
+    return '/default-bg.jpg';
   });
 
   const [bgOpacity, setBgOpacityState] = useState<number>(() => {
@@ -266,12 +269,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem(STORAGE_KEYS.SOUND, String(soundEnabled));
   }, [soundEnabled]);
 
-  const setCustomBg = (url: string | null) => {
+    const setCustomBg = (url: string | null) => {
     setCustomBgState(url);
     if (url) {
       localStorage.setItem(STORAGE_KEYS.CUSTOM_BG, url);
     } else {
-      localStorage.removeItem(STORAGE_KEYS.CUSTOM_BG);
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_BG, 'none');
     }
   };
 

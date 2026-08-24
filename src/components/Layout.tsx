@@ -87,7 +87,7 @@ export const Layout: React.FC = () => {
         </div>
         
         {/* Pass isIdle to Outlet context so Dashboard can read it if needed, or we just handle it globally */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 transition-all duration-700 w-full max-w-[1700px] mx-auto">
+        <main className="flex-1 flex flex-col min-h-0 overflow-y-auto p-3 sm:p-4 lg:p-6 transition-all duration-700 w-full max-w-[1700px] mx-auto">
           <Outlet context={{ isIdle }} />
         </main>
       </div>

@@ -5,6 +5,11 @@ import { sounds } from '../utils/audio';
 
 const PRESET_WALLPAPERS = [
   {
+    id: 'preset-default-anime',
+    name: 'Default Anime Realm',
+    url: '/default-bg.jpg',
+  },
+  {
     id: 'preset-yggdrasil-cosmic',
     name: 'Cosmic Yggdrasil Nebula',
     url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2070&auto=format&fit=crop',

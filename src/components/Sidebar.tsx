@@ -10,7 +10,8 @@ import {
   GraduationCap,
   Sparkles,
   Compass,
-  Copy
+  Copy,
+  Wand2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ThemeMode } from '../types';
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/notes', label: 'Notes', icon: FileText },
   { path: '/topics', label: 'Topics', icon: Boxes },
+  { path: '/creator', label: 'Topic Creator', icon: Wand2 },
   { path: '/labs', label: 'Labs', icon: Terminal },
   { path: '/board', label: 'Board', icon: KanbanSquare },
   { path: '/assistant', label: 'Lab Debugger', icon: Bug },

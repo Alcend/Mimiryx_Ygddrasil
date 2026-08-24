@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Plus, Image, UploadCloud, Moon, Monitor, Settings, Palette, Volume2, VolumeX, Menu, Brain, Key } from 'lucide-react';
+import { Search, Plus, Image, UploadCloud, Moon, Monitor, Settings, Palette, Volume2, VolumeX, Menu, Brain, Key, Activity } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sounds } from '../utils/audio';
 import { BackgroundSettingsModal } from './BackgroundSettingsModal';
 import { ImportExportModal } from './ImportExportModal';
+import { AnalyticsModal } from './AnalyticsModal';
 import { ThemeMode } from '../types';
 
 const THEMES: { id: ThemeMode; label: string; color: string }[] = [
@@ -18,6 +19,7 @@ export const Header: React.FC = () => {
   const { searchQuery, setSearchQuery, theme, setTheme, soundEnabled, setSoundEnabled, autoDim, setAutoDim, customBg, isSidebarOpen, setSidebarOpen, notes, topics, setIsOracleOpen, isOracleOpen, setIsSettingsOpen, geminiKey } = useApp();
   const [showBgModal, setShowBgModal] = useState(false);
   const [showImportExportModal, setShowImportExportModal] = useState(false);
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const navigate = useNavigate();
@@ -82,7 +84,7 @@ export const Header: React.FC = () => {
               className="w-full h-9 bg-background/50 border border-white/10 rounded-xl pl-9 pr-4 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/50 font-mono text-xs"
             />
             
-            {/* Search Results Dropdown */}
+                        {/* Search Results Dropdown */}
             {isSearchFocused && searchQuery.trim() && (searchResults.notes.length > 0 || searchResults.topics.length > 0) && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-card/95 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 cyber-card max-h-[400px] overflow-y-auto">
                 
@@ -93,10 +95,17 @@ export const Header: React.FC = () => {
                       <button
                         key={t.id}
                         onClick={() => { sounds.playClick(); navigate(`/topics/${t.id}`); setSearchQuery(''); }}
-                        className="w-full text-left px-2 py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                        className="w-full text-left px-2 py-2 rounded-lg hover:bg-white/10 transition-colors flex flex-col gap-1 group"
                       >
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color || 'var(--primary)' }} />
-                        <span className="text-sm text-foreground group-hover:text-primary transition-colors">{t.name}</span>
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color || 'var(--primary)' }} />
+                            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{t.name}</span>
+                          </div>
+                          <span className="text-[9px] font-mono text-muted-foreground opacity-60">
+                            {t.createdAt ? new Date(t.createdAt).toLocaleDateString() + ' ' + new Date(t.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                          </span>
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -111,7 +120,12 @@ export const Header: React.FC = () => {
                         onClick={() => { sounds.playClick(); navigate(`/notes/${n.id}`); setSearchQuery(''); }}
                         className="w-full text-left px-2 py-2 rounded-lg hover:bg-white/10 transition-colors group"
                       >
-                        <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">{n.title}</p>
+                        <div className="flex items-center justify-between w-full mb-0.5">
+                          <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">{n.title}</p>
+                          <span className="text-[9px] font-mono text-muted-foreground opacity-60 shrink-0 ml-2">
+                            {new Date(n.createdAt).toLocaleDateString()} {new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                        </div>
                         <p className="text-[11px] text-muted-foreground truncate">{n.summary}</p>
                       </button>
                     ))}
@@ -252,6 +266,21 @@ export const Header: React.FC = () => {
                   {customBg && <span className="w-2 h-2 rounded-full bg-primary" />}
                 </button>
 
+                {/* Analytics */}
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setShowAnalyticsModal(true);
+                    setSettingsOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 text-xs font-mono text-foreground transition-colors group"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <span>Pipeline Analytics</span>
+                  </div>
+                </button>
+
                 {/* Import / Export */}
                 <button
                   onClick={() => {
@@ -287,6 +316,9 @@ export const Header: React.FC = () => {
 
       {/* Import & Export AI Modal */}
       <ImportExportModal isOpen={showImportExportModal} onClose={() => setShowImportExportModal(false)} />
+
+      {/* Analytics Modal */}
+      <AnalyticsModal isOpen={showAnalyticsModal} onClose={() => setShowAnalyticsModal(false)} />
     </>
   );
 };

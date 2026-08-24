@@ -17,6 +17,7 @@ import { AIAgentPage } from './pages/AIAgentPage';
 import { DataJourneyPage } from './pages/DataJourneyPage';
 import { TemplatesPage } from './pages/TemplatesPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { TopicCreatorPage } from './pages/TopicCreatorPage';
 
 export const App: React.FC = () => {
   return (
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
             <Route path="templates" element={<TemplatesPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="progress" element={<AnalyticsPage />} />
+            <Route path="creator" element={<TopicCreatorPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
