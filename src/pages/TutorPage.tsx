@@ -1,5 +1,6 @@
+import { EmptyState } from '../components/EmptyState';
 import React, { useState } from 'react';
-import { GraduationCap, Send } from 'lucide-react';
+import { GraduationCap, Send, MonitorPlay } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 export const TutorPage: React.FC = () => {
@@ -12,13 +13,13 @@ export const TutorPage: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
 
-  const handleSend = () => {
+  const handleSend = (overrideText?: string) => {
     if (!input.trim()) return;
     sounds.playClick();
-    const newMsgs = [...messages, { role: 'user' as const, text: input }];
+    const newMsgs = [...messages, { role: 'user' as const, text: overrideText || input }];
     setMessages(newMsgs);
     const q = input;
-    setInput('');
+    if (!overrideText) setInput('');
 
     setTimeout(() => {
       sounds.playSuccess();
@@ -38,8 +39,20 @@ export const TutorPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="rounded-2xl cyber-card border border-border flex flex-col h-[520px] overflow-hidden">
-        <div className="flex-1 p-6 overflow-y-auto space-y-4">
+      <div className="rounded-2xl cyber-card border border-border flex flex-col">
+        <div className="p-6 space-y-4">
+          {messages.length === 0 && (
+            <EmptyState
+              icon={<MonitorPlay className="w-8 h-8" />}
+              title="IT Operations Tutor"
+              description="Ask me anything about networking, Active Directory, server management, or hardware troubleshooting."
+              actions={[
+                { label: "Explain Subnetting", onClick: () => handleSend("Explain subnetting simply") },
+                { label: "Troubleshoot DNS", onClick: () => handleSend("How to troubleshoot DNS issues") }
+              ]}
+            />
+          )}
+
           {messages.map((m, idx) => (
             <div
               key={idx}
@@ -68,7 +81,7 @@ export const TutorPage: React.FC = () => {
             className="flex-1 bg-background border border-border rounded-lg px-4 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
           />
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-mono font-bold hover:opacity-90 shadow-neon-glow"
           >
             <Send className="w-4 h-4" />

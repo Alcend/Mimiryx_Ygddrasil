@@ -114,7 +114,7 @@ export const Dashboard: React.FC = () => {
               <select
                 value={activeRealm}
                 onChange={(e) => { sounds.playClick(); setActiveRealm(e.target.value); }}
-                className="bg-black/80 backdrop-blur-md border border-white/10 text-primary hover:bg-black hover:border-primary/50 transition-all text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer uppercase tracking-wider shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+                className="bg-black/80 backdrop-blur-md border border-white/10 text-primary hover:bg-black hover:border-primary/50 transition-all text-[10px] font-mono font-bold px-3 py-2 rounded-lg outline-none cursor-pointer uppercase tracking-wider shadow-[0_0_15px_rgba(0,0,0,0.5)]"
               >
                 {availableRealms.map(realm => (
                   <option key={realm} value={realm} className="bg-[#0b101a] text-foreground font-mono">
@@ -133,7 +133,7 @@ export const Dashboard: React.FC = () => {
         }`}>
           {/* Header Controls for Rail */}
           <div className="bg-card/70 backdrop-blur border border-white/10 rounded-2xl p-4 cyber-card flex flex-col min-h-0 gap-3 h-full">
-            <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-primary" />
                 <h3 className="text-xs font-heading font-bold uppercase tracking-wider text-foreground">
@@ -143,7 +143,7 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center gap-1 text-[10px] font-mono">
                 <button
                   onClick={() => { sounds.playClick(); setActiveSideTab('all'); }}
-                  className={`px-2 py-0.5 rounded transition-all ${
+                  className={`px-2 py-1 rounded transition-all ${
                     activeSideTab === 'all'
                       ? 'bg-primary/20 text-primary border border-primary/40'
                       : 'text-muted-foreground hover:text-foreground'
@@ -153,7 +153,7 @@ export const Dashboard: React.FC = () => {
                 </button>
                 <button
                   onClick={() => { sounds.playClick(); setActiveSideTab('analytics'); }}
-                  className={`px-2 py-0.5 rounded transition-all ${
+                  className={`px-2 py-1 rounded transition-all ${
                     activeSideTab === 'analytics'
                       ? 'bg-primary/20 text-primary border border-primary/40'
                       : 'text-muted-foreground hover:text-foreground'
@@ -163,7 +163,7 @@ export const Dashboard: React.FC = () => {
                 </button>
                 <button
                   onClick={() => { sounds.playClick(); setActiveSideTab('telemetry'); }}
-                  className={`px-2 py-0.5 rounded transition-all ${
+                  className={`px-2 py-1 rounded transition-all ${
                     activeSideTab === 'telemetry'
                       ? 'bg-primary/20 text-primary border border-primary/40'
                       : 'text-muted-foreground hover:text-foreground'
@@ -177,27 +177,27 @@ export const Dashboard: React.FC = () => {
             {/* Compact Core Stats */}
             <div className="grid grid-cols-2 gap-2 pb-3 border-b border-border/20 shrink-0">
               <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => { sounds.playClick(); navigate('/notes'); }}>
-                <div className="flex items-center gap-1.5"><BookOpen className="w-3 h-3 text-[hsl(var(--neon-blue))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Notes</span></div>
+                <div className="flex items-center gap-2"><BookOpen className="w-3 h-3 text-[hsl(var(--neon-blue))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Notes</span></div>
                 <span className="text-xs font-bold font-mono text-foreground">{totalNotesCount}</span>
               </div>
               <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5 cursor-pointer hover:border-[hsl(var(--neon-green))]/40 transition-colors" onClick={() => { sounds.playClick(); navigate('/labs'); }}>
-                <div className="flex items-center gap-1.5"><FlaskConical className="w-3 h-3 text-[hsl(var(--neon-green))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Labs</span></div>
+                <div className="flex items-center gap-2"><FlaskConical className="w-3 h-3 text-[hsl(var(--neon-green))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Labs</span></div>
                 <span className="text-xs font-bold font-mono text-foreground">{completedLabsCount}</span>
               </div>
               <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5 cursor-pointer hover:border-[hsl(var(--neon-purple))]/40 transition-colors" onClick={() => { sounds.playClick(); navigate('/topics'); }}>
-                <div className="flex items-center gap-1.5"><Boxes className="w-3 h-3 text-[hsl(var(--neon-purple))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Topics</span></div>
+                <div className="flex items-center gap-2"><Boxes className="w-3 h-3 text-[hsl(var(--neon-purple))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Topics</span></div>
                 <span className="text-xs font-bold font-mono text-foreground">{topics.length}</span>
               </div>
               <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5">
-                <div className="flex items-center gap-1.5"><Trophy className="w-3 h-3 text-[hsl(var(--neon-amber))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Mastery</span></div>
+                <div className="flex items-center gap-2"><Trophy className="w-3 h-3 text-[hsl(var(--neon-amber))]" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Mastery</span></div>
                 <span className="text-xs font-bold font-mono text-foreground">{masteryPercentage}%</span>
               </div>
               <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5">
-                <div className="flex items-center gap-1.5"><Radio className="w-3 h-3 text-emerald-400 animate-pulse" /><span className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest">Status</span></div>
+                <div className="flex items-center gap-2"><Radio className="w-3 h-3 text-emerald-400 animate-pulse" /><span className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest">Status</span></div>
                 <span className="text-[9px] font-bold font-mono text-emerald-400">ONLINE</span>
               </div>
               <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-white/5">
-                <div className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-primary" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Local</span></div>
+                <div className="flex items-center gap-2"><Clock className="w-3 h-3 text-primary" /><span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Local</span></div>
                 <span className="text-[9px] font-bold font-mono text-foreground">{currentTime.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
@@ -219,12 +219,12 @@ export const Dashboard: React.FC = () => {
             {(activeSideTab === 'all' || activeSideTab === 'telemetry') && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between" title="Live system metrics monitoring the health of your knowledge graph">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                     <Server className="w-3 h-3 text-primary" /> Real-Time Telemetry
                   </span>
                   <button
                     onClick={() => navigate('/monitor')}
-                    className="text-[10px] font-mono text-primary hover:underline flex items-center gap-0.5"
+                    className="text-[10px] font-mono text-primary hover:underline flex items-center gap-1"
                   >
                     Open Monitor <ArrowUpRight className="w-3 h-3" />
                   </button>
@@ -232,14 +232,14 @@ export const Dashboard: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   {metrics.slice(0, 4).map((m) => (
-                    <div key={m.id} title={`Current ${m.name}: ${m.value}${m.unit}. Represents system ${m.name.toLowerCase()} overhead.`} className="p-2.5 rounded-xl bg-background/50 border border-white/5 flex flex-col justify-between hover:bg-white/[0.02] transition-colors cursor-help">
+                    <div key={m.id} title={`Current ${m.name}: ${m.value}${m.unit}. Represents system ${m.name.toLowerCase()} overhead.`} className="p-3 rounded-xl bg-background/50 border border-white/5 flex flex-col justify-between hover:bg-white/[0.02] transition-colors cursor-help">
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-mono text-muted-foreground truncate">{m.name}</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                       </div>
-                      <div className="my-1.5">
+                      <div className="my-2">
                         <span className="text-base font-bold font-mono text-foreground">{m.value}</span>
-                        <span className="text-[9px] text-primary font-normal ml-0.5">{m.unit}</span>
+                        <span className="text-[9px] text-primary font-normal ml-1">{m.unit}</span>
                       </div>
                       <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
                         <div
@@ -252,7 +252,7 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Live Terminal Stream */}
-                <div className="rounded-xl bg-black/80 border border-border/50 p-2.5 space-y-1.5 cursor-help" title="Live event stream of AI clustering and system background tasks">
+                <div className="rounded-xl bg-black/80 border border-border/50 p-3 space-y-2 cursor-help" title="Live event stream of AI clustering and system background tasks">
                   <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground border-b border-border/30 pb-1">
                     <span className="flex items-center gap-1 text-emerald-400">
                       <Terminal className="w-3 h-3" /> SYNAPSE STREAM

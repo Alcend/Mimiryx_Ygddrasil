@@ -172,7 +172,7 @@ export const LabDetailPage: React.FC = () => {
         </div>
 
         {/* Interactive CLI Terminal Simulator */}
-        <div className="lg:col-span-7 rounded-2xl cyber-card border border-border/90 flex flex-col overflow-hidden h-[500px]">
+        <div className="lg:col-span-7 rounded-2xl cyber-card border border-border/90 flex flex-col">
           {/* Terminal Window Bar */}
           <div className="px-4 py-2.5 bg-black/60 border-b border-border flex items-center justify-between font-mono text-xs text-muted-foreground">
             <div className="flex items-center gap-2">

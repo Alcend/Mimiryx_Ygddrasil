@@ -159,7 +159,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
   const wordCount = note.content.split(/\s+/).filter(Boolean).length;
 
   return (
-    <div ref={fullscreenContainerRef} className={isFocusMode ? "bg-[#020605] text-emerald-400/90 w-screen h-screen overflow-hidden flex flex-col p-4 md:p-6 relative" : "space-y-4 relative"}>
+    <div ref={fullscreenContainerRef} className={isFocusMode ? "bg-[#020605] text-emerald-400/90 w-screen h-screen overflow-hidden flex flex-col p-4 md:p-6 relative" : "space-y-2 relative"}>
       {isFocusMode && (
         <div className="absolute inset-0 pointer-events-none" style={{
           background: 'radial-gradient(circle at center, transparent 0%, #000 100%)',
@@ -167,7 +167,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
         }} />
       )}
       {/* Top Reading Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 px-4 rounded-xl bg-card/80 backdrop-blur border border-border">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2 px-3 rounded-xl bg-card/80 backdrop-blur border border-border">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-mono text-muted-foreground">FONT</span>
@@ -178,7 +178,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
             </div>
           </div>
           
-          <button onClick={() => setShowToc(!showToc)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-mono transition-colors ${showToc ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border bg-white/5 text-muted-foreground hover:text-foreground'}`}>
+          <button onClick={() => setShowToc(!showToc)} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-mono transition-colors ${showToc ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border bg-white/5 text-muted-foreground hover:text-foreground'}`}>
             <List className="w-3.5 h-3.5" />
             Meta
           </button>
@@ -187,7 +187,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
         <div className="flex items-center gap-2">
           <button 
             onClick={toggleFocusMode}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono transition-colors border ${
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-mono transition-colors border ${
               isFocusMode 
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
                 : 'bg-white/5 border-border text-muted-foreground hover:text-foreground'
@@ -200,7 +200,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
 
           <button 
             onClick={() => { setActiveRecallMode(!activeRecallMode); sounds.playClick?.(); }} 
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono transition-colors border ${
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-mono transition-colors border ${
               activeRecallMode 
                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]' 
                 : 'bg-white/5 border-border text-muted-foreground hover:text-foreground'
@@ -213,7 +213,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
           <button onClick={handleCopyPage} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary transition-colors" title="Copy active page text">
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
-          <button onClick={handleToggleMastery} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono transition-colors border ${note.status === 'mastered' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' : 'bg-white/5 border-border text-muted-foreground hover:text-primary'}`}>
+          <button onClick={handleToggleMastery} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-mono transition-colors border ${note.status === 'mastered' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' : 'bg-white/5 border-border text-muted-foreground hover:text-primary'}`}>
             {note.status === 'mastered' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
             {note.status === 'mastered' ? 'Mastered' : 'Mark Mastered'}
           </button>
@@ -277,11 +277,11 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
 
           <div className="mb-3 pb-3 border-b border-border/40 flex justify-between items-end mt-1 shrink-0">
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-1">
                 <span className={`px-2 py-0.5 rounded text-[9px] font-mono uppercase ${note.status === 'mastered' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary/20 text-primary'}`}>{note.status}</span>
                 {topic && <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] font-mono text-muted-foreground uppercase">{topic.name}</span>}
               </div>
-              <h1 className="text-2xl md:text-3xl font-heading font-extrabold tracking-tight text-foreground">{note.title}</h1>
+              <h1 className="text-xl md:text-2xl font-heading font-extrabold tracking-tight text-foreground">{note.title}</h1>
             </div>
           </div>
 
@@ -289,7 +289,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
           <div 
             className={`relative w-full ${isFocusMode ? "flex-1 min-h-0" : "pb-4"}`} 
             style={{ 
-              height: isFocusMode ? '100%' : 'calc(100vh - 190px)',
+              height: isFocusMode ? '100%' : 'calc(100vh - 150px)',
               perspective: '2500px'
             }}
           >
@@ -313,7 +313,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
               >
                 
                 {/* Page Number Indicator */}
-                <div className="text-[9px] font-mono text-primary/70 text-right mb-2">
+                <div className="text-[9px] font-mono text-primary/70 text-right mb-1">
                   PAGE {idx + 1} OF {pagesCount}
                 </div>
 
@@ -324,7 +324,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
                     hr: ({node, ...props}) => <hr className="page-break-line my-8 border-border/40" {...props} />,
                     h1: ({node, ...props}) => <h1 className="text-xl font-heading font-bold text-foreground mt-2 mb-4 border-b border-border/40 pb-2" {...props} />,
                     h2: ({node, ...props}) => <h2 className="text-lg font-heading font-bold text-primary mt-5 mb-3 flex items-center gap-2" {...props} />,
-                    h3: ({node, ...props}) => <h3 className="text-base font-heading font-bold text-foreground mt-4 mb-2" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-base font-heading font-bold text-foreground mt-4 mb-1" {...props} />,
                     p: ({node, ...props}) => <p className="text-muted-foreground mb-4 leading-relaxed whitespace-pre-wrap break-words" {...props} />,
                     ul: ({node, ...props}) => <ul className="list-disc list-outside ml-5 space-y-1 my-4 text-muted-foreground marker:text-primary" {...props} />,
                     ol: ({node, ...props}) => <ol className="list-decimal list-outside ml-5 space-y-1 my-4 text-muted-foreground marker:text-primary" {...props} />,

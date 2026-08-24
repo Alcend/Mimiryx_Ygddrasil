@@ -10,16 +10,12 @@ import {
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { ImportExportModal } from '../components/ImportExportModal';
+import { EmptyState } from '../components/EmptyState';
 
 export const AIAgentPage: React.FC = () => {
   const { notes, topics, labs, addActivity } = useApp();
   const [showImportModal, setShowImportModal] = useState(false);
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; actionTag?: string }>>([
-    {
-      role: 'assistant',
-      text: `Greetings. I am the MIMIRYX Autonomous Knowledge Agent.\n\nI maintain synaptic coherence across your **${notes.length} Knowledge Records**, **${topics.length} Yggdrasil Branches**, and **${labs.length} Practical Labs**.\n\nI can automatically organize imported files, classify concepts into the right topic branches, or create new branches on your World Tree whenever you explore new domains.`,
-    },
-  ]);
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; actionTag?: string }>>([]);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
 
@@ -129,7 +125,7 @@ export const AIAgentPage: React.FC = () => {
       </div>
 
       {/* Main Terminal Chat Interface */}
-      <div className="rounded-2xl cyber-card border border-border flex flex-col h-[520px] overflow-hidden bg-black/40">
+      <div className="rounded-2xl cyber-card border border-border flex flex-col bg-black/40">
         {/* Terminal Header */}
         <div className="p-3 px-4 border-b border-border bg-black/60 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
@@ -143,7 +139,19 @@ export const AIAgentPage: React.FC = () => {
         </div>
 
         {/* Message Stream */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-4">
+        <div className="p-6 space-y-4">
+          {messages.length === 0 && (
+            <EmptyState
+              icon={<BrainCircuit className="w-8 h-8" />}
+              title="Autonomous Knowledge Agent"
+              description="I maintain synaptic coherence across your Knowledge Records. I can automatically organize files, classify concepts, or create new branches."
+              actions={[
+                { label: "Analyze Cluster Coherence", onClick: () => handleSend("Analyze tree cluster coherence") },
+                { label: "Find Untagged Records", onClick: () => handleSend("Find untagged records") }
+              ]}
+            />
+          )}
+
           {messages.map((m, idx) => (
             <div
               key={idx}

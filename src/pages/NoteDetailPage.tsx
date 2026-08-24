@@ -137,7 +137,7 @@ export const NoteDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3 max-w-5xl mx-auto pb-4">
+    <div className="space-y-2 max-w-5xl mx-auto pb-4">
       {/* Back Button & Top Action Strip */}
       <div className="flex items-center justify-between">
         <button

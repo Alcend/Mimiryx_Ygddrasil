@@ -144,13 +144,13 @@ export const CreatorLayout: React.FC = () => {
           {/* Left Pane: Raw Dump */}
           <div className="flex flex-col h-full bg-[#020605] border border-emerald-500/30 rounded-xl overflow-hidden shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
             <div className="flex items-center justify-between bg-black/40 border-b border-emerald-500/20 px-4 py-2 text-[10px] font-mono text-emerald-500 uppercase">
-              <span className="flex items-center gap-1.5"><Type className="w-3 h-3" /> RAW SYNAPTIC STREAM</span>
+              <span className="flex items-center gap-2"><Type className="w-3 h-3" /> RAW SYNAPTIC STREAM</span>
               <span className="opacity-50">
                 {activeJob?.status || 'Idle'}
                 {activeJob?.lastError && <span className="text-red-400 ml-2">({activeJob.lastError})</span>}
               </span>
             </div>
-            <div className="flex-1 p-5 font-mono text-xs text-emerald-400/90 leading-relaxed overflow-y-auto whitespace-pre-wrap">
+            <div className="flex-1 p-6 font-mono text-xs text-emerald-400/90 leading-relaxed overflow-y-auto whitespace-pre-wrap">
               {activeJob?.researchText || <span className="opacity-30">Awaiting job...</span>}
               {activeJob?.status === 'RESEARCHING' && <span className="inline-block w-2 h-4 bg-emerald-400 animate-pulse ml-1 align-middle" />}
             </div>
@@ -159,7 +159,7 @@ export const CreatorLayout: React.FC = () => {
           {/* Right Pane: Compiled Node (Live Preview) */}
           <div className="flex flex-col h-full bg-[#070d14] border border-primary/30 rounded-xl overflow-hidden shadow-[inset_0_0_20px_rgba(var(--color-primary),0.05)] relative">
             <div className="flex items-center justify-between bg-black/40 border-b border-primary/20 px-4 py-2 text-[10px] font-mono text-primary uppercase">
-              <span className="flex items-center gap-1.5"><BrainCircuit className="w-3 h-3" /> COMPILED NEURAL NODE</span>
+              <span className="flex items-center gap-2"><BrainCircuit className="w-3 h-3" /> COMPILED NEURAL NODE</span>
               <span className="opacity-50">
                 {activeJob?.status === 'AWAITING_REVIEW' ? (
                   <button onClick={() => handleReviewPlacement(activeJob.id)} className="bg-primary text-black px-2 py-1 rounded">Review Placement</button>
@@ -167,7 +167,7 @@ export const CreatorLayout: React.FC = () => {
               </span>
             </div>
             
-            <div className="flex-1 p-5 font-mono text-sm text-foreground leading-relaxed overflow-y-auto whitespace-pre-wrap">
+            <div className="flex-1 p-6 font-mono text-sm text-foreground leading-relaxed overflow-y-auto whitespace-pre-wrap">
               {activeJob?.synthesisText || <span className="opacity-30">Waiting for synthesis layer...</span>}
               {activeJob?.status === 'STRUCTURING' && <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle" />}
             </div>
@@ -194,7 +194,7 @@ export const CreatorLayout: React.FC = () => {
                   {job.status === 'AWAITING_REVIEW' && (
                     <button 
                       onClick={() => handleReviewPlacement(job.id)}
-                      className="bg-primary/20 text-primary border border-primary/30 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/30"
+                      className="bg-primary/20 text-primary border border-primary/30 px-3 py-2 rounded-lg text-xs font-bold hover:bg-primary/30"
                     >
                       Review
                     </button>

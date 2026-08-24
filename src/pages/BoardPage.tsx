@@ -55,7 +55,7 @@ export const BoardPage: React.FC = () => {
           <h2 className="text-2xl font-heading font-bold tracking-tight text-foreground flex items-center gap-2">
             <KanbanSquare className="w-6 h-6 text-primary" /> Study Knowledge Board
           </h2>
-          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+          <p className="text-xs text-muted-foreground font-mono mt-1">
             Organize study sprints, lab objectives, and architecture mastery workflows.
           </p>
         </div>
@@ -75,27 +75,27 @@ export const BoardPage: React.FC = () => {
         {COLUMNS.map((col) => {
           const cards = boardCards.filter((c) => c.column === col.id);
           return (
-            <div key={col.id} className="p-4 rounded-xl cyber-card border border-border/80 flex flex-col h-[600px]">
+            <div key={col.id} className="p-4 rounded-xl cyber-card border border-border/80 flex flex-col h-full">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-border">
                 <h3 className={`text-xs font-mono font-bold uppercase tracking-wider ${col.color}`}>
                   {col.title}
                 </h3>
-                <span className="text-xs font-mono bg-white/5 px-2 py-0.5 rounded text-muted-foreground">
+                <span className="text-xs font-mono bg-white/5 px-2 py-1 rounded text-muted-foreground">
                   {cards.length}
                 </span>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              <div className="space-y-3 pr-1">
                 {cards.map((card) => {
                   const nextCol = getNextColumn(card.column);
                   const prevCol = getPrevColumn(card.column);
                   return (
                     <div
                       key={card.id}
-                      className="p-3.5 rounded-lg bg-background/80 border border-border/70 hover:border-primary/40 transition-all space-y-2 group"
+                      className="p-4 rounded-lg bg-background/80 border border-border/70 hover:border-primary/40 transition-all space-y-2 group"
                     >
                       <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                        <span className={`text-[10px] font-mono px-2 py-1 rounded ${
                           card.priority === 'high'
                             ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                             : 'bg-white/5 text-muted-foreground'
@@ -104,7 +104,7 @@ export const BoardPage: React.FC = () => {
                         </span>
                         <button
                           onClick={() => deleteBoardCard(card.id)}
-                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 p-0.5 transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 p-1 transition-opacity"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>

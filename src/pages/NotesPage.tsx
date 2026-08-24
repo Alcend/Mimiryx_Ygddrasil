@@ -189,17 +189,17 @@ export const NotesPage: React.FC = () => {
           <h2 className="text-2xl font-heading font-bold tracking-tight text-foreground flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-primary" /> Knowledge Records & Grimoire
           </h2>
-          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+          <p className="text-xs text-muted-foreground font-mono mt-1">
             Showing <strong className="text-primary font-bold">{filteredNotes.length}</strong> of {notes.length} records across {topics.length} neural clusters
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => {
               sounds.playClick();
               setShowImportModal(true);
             }}
-            className="px-3.5 py-2 rounded-lg bg-primary/10 border border-primary/40 text-primary text-xs font-semibold font-mono flex items-center gap-2 hover:bg-primary/20 transition-all shadow-neon-glow"
+            className="px-4 py-2 rounded-lg bg-primary/10 border border-primary/40 text-primary text-xs font-semibold font-mono flex items-center gap-2 hover:bg-primary/20 transition-all shadow-neon-glow"
           >
             <Upload className="w-4 h-4" /> Import / Export
           </button>
@@ -225,7 +225,7 @@ export const NotesPage: React.FC = () => {
             placeholder="Search records by title, summary, tags, topic name..."
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-background/80 border border-border rounded-xl text-xs font-mono text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+            className="w-full pl-8 pr-4 py-2 bg-background/80 border border-border rounded-xl text-xs font-mono text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground"
           />
           {localSearch && (
             <button
@@ -238,7 +238,7 @@ export const NotesPage: React.FC = () => {
         </div>
 
         {/* Topic Filter with Note Counts */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <select
             value={selectedTopic}
             onChange={(e) => {
@@ -257,7 +257,7 @@ export const NotesPage: React.FC = () => {
         </div>
 
         {/* Status Filter */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <select
             value={selectedStatus}
             onChange={(e) => {
@@ -274,7 +274,7 @@ export const NotesPage: React.FC = () => {
         </div>
 
         {/* Difficulty Filter */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <select
             value={selectedDifficulty}
             onChange={(e) => {
@@ -328,7 +328,7 @@ export const NotesPage: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map((note) => {
             const topic = resolveNoteTopic(note, topics);
             const pageCount = Math.max(1, Math.ceil(note.content.split('---').length));
@@ -341,7 +341,7 @@ export const NotesPage: React.FC = () => {
             return (
               <div
                 key={note.id}
-                className="relative min-h-[250px] transition-all duration-300 transform-gpu group hover:-translate-y-1.5"
+                className="relative h-full transition-all duration-300 transform-gpu group hover:-translate-y-1.5"
                 style={{ perspective: '1200px' }}
               >
                 {/* 3D Flip Card Inner Container */}
@@ -355,7 +355,7 @@ export const NotesPage: React.FC = () => {
                 >
                   {/* ── CARD FRONT ── */}
                   <div
-                    className="w-full h-full p-5 rounded-2xl cyber-card border border-border/80 hover:border-primary/60 transition-all flex flex-col justify-between bg-[#070e17] group-hover:shadow-[0_12px_35px_rgba(0,224,255,0.12)]"
+                    className="w-full h-full p-6 rounded-2xl cyber-card border border-border/80 hover:border-primary/60 transition-all flex flex-col bg-[#070e17] group-hover:shadow-[0_12px_35px_rgba(0,224,255,0.12)]"
                     style={{
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
@@ -364,10 +364,10 @@ export const NotesPage: React.FC = () => {
                   >
                     <div>
                       {/* Top Badges */}
-                      <div className="flex items-center justify-between mb-2.5">
-                        <div className="flex items-center gap-1.5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
                           <span
-                            className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-bold ${
+                            className={`text-[10px] font-mono px-2 py-1 rounded-full border font-bold ${
                               note.status === 'mastered'
                                 ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
                                 : note.status === 'reviewing'
@@ -378,7 +378,7 @@ export const NotesPage: React.FC = () => {
                             {note.status.toUpperCase()}
                           </span>
 
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-muted-foreground flex items-center gap-1">
+                          <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-white/5 border border-white/10 text-muted-foreground flex items-center gap-1">
                             <BookOpen className="w-2.5 h-2.5 text-primary" />
                             {pageCount} {pageCount === 1 ? 'Page' : 'Pages'}
                           </span>
@@ -423,7 +423,7 @@ export const NotesPage: React.FC = () => {
                             ))}
                           </select>
                           <div
-                            className="text-[11px] font-mono text-primary/90 flex items-center gap-1.5 hover:underline text-left transition-colors cursor-pointer"
+                            className="text-[11px] font-mono text-primary/90 flex items-center gap-2 hover:underline text-left transition-colors cursor-pointer"
                             title={`Current Topic: ${topic.name}. Click to change.`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: topic.color }} />
@@ -434,23 +434,23 @@ export const NotesPage: React.FC = () => {
                       )}
 
                       {/* Summary Excerpt */}
-                      <p className="text-xs text-muted-foreground mt-2.5 line-clamp-3 leading-relaxed font-mono">
+                      <p className="text-xs text-muted-foreground mt-3 line-clamp-3 leading-relaxed font-mono">
                         {note.summary || 'Click to preview multi-page chapters.'}
                       </p>
                     </div>
 
                     {/* Bottom Actions */}
-                    <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between">
+                    <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
                       <div className="flex items-center gap-1 flex-wrap max-w-[55%]">
                         {note.tags &&
                           note.tags.slice(0, 2).map((tag, idx) => (
-                            <span key={idx} className="text-[9px] font-mono text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded">
+                            <span key={idx} className="text-[9px] font-mono text-muted-foreground bg-white/5 px-2 py-1 rounded">
                               #{tag}
                             </span>
                           ))}
                       </div>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         {/* Edit Button - Visible on Hover */}
                         <Link
                           to={`/notes/${note.id}`}
@@ -459,7 +459,7 @@ export const NotesPage: React.FC = () => {
                              e.stopPropagation();
                              sounds.playClick();
                           }}
-                          className="text-xs font-mono text-muted-foreground hover:text-white px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                          className="text-xs font-mono text-muted-foreground hover:text-white px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center gap-1 opacity-0 group-hover:opacity-100"
                           title="Edit Note"
                         >
                           <Edit3 className="w-3 h-3" /> Edit
@@ -472,7 +472,7 @@ export const NotesPage: React.FC = () => {
                              e.stopPropagation();
                              sounds.playClick();
                           }}
-                          className="text-xs font-mono text-primary hover:text-white px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/30 border border-primary/30 transition-all flex items-center gap-1 shadow-sm"
+                          className="text-xs font-mono text-primary hover:text-white px-3 py-1 rounded-lg bg-primary/10 hover:bg-primary/30 border border-primary/30 transition-all flex items-center gap-1 shadow-sm"
                           title="Open Full Multi-Page Book"
                         >
                           <BookOpen className="w-3 h-3" /> Read
@@ -483,7 +483,7 @@ export const NotesPage: React.FC = () => {
 
                   {/* ── CARD BACK (Flipped Grimoire Chapter Summary View) ── */}
                   <div
-                    className="absolute inset-0 w-full h-full p-5 rounded-2xl cyber-card border border-primary/50 bg-[#091522] flex flex-col justify-between shadow-2xl"
+                    className="absolute inset-0 w-full h-full p-6 rounded-2xl cyber-card border border-primary/50 bg-[#091522] flex flex-col justify-between shadow-2xl"
                     style={{
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
@@ -494,7 +494,7 @@ export const NotesPage: React.FC = () => {
                     <div className="flex flex-col flex-1 min-h-0">
                       {/* Back Header */}
                       <div className="flex items-center justify-between border-b border-border/60 pb-2 mb-2 shrink-0">
-                        <div className="flex items-center gap-1.5 text-[10px] font-mono text-primary font-bold">
+                        <div className="flex items-center gap-2 text-[10px] font-mono text-primary font-bold">
                           <BookMarked className="w-3.5 h-3.5" />
                           <span>PAGE {currentBackPageNum} OF {pageCount}</span>
                         </div>
@@ -516,7 +516,7 @@ export const NotesPage: React.FC = () => {
 
                     {/* Back Footer & Page Stepper */}
                     <div 
-                      className="pt-2.5 border-t border-border/50 flex items-center justify-between mt-auto"
+                      className="pt-3 border-t border-border/50 flex items-center justify-between mt-auto"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {/* Page Stepper Buttons */}
