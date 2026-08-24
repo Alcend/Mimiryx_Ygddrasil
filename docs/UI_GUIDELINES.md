@@ -23,3 +23,6 @@ Avoid generic AI-generated UI. Do not automatically produce three cards, gradien
 
 ## 6. COMPONENT REUSE
 Before creating a component, search for existing components that solve the same problem. Reuse or extend them when appropriate. Do not create five different versions of Modals, Buttons, Cards, Dropdowns, etc.
+
+## 7. WIDESCREEN READING CONSTRAINT
+Never center a narrow reading column inside a massive void on desktop viewports. When displaying long-form content, use the remaining horizontal space for utility sidebars (e.g., Table of Contents on the left, Metadata/Actions on the right). Keep the central prose container constrained to max-w-3xl for readability, but allow the outer layout grid to span max-w-[1536px] or w-full. Headers and toolbars must be compact and inline, not towering blocks.
