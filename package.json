@@ -7,7 +7,9 @@
     "dev": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "verify": "tsc --noEmit && vite build"
+    "verify": "tsc --noEmit && vitest run && vite build",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

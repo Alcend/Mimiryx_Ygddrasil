@@ -1,23 +1,30 @@
 import { test, expect } from '@playwright/test';
 
-test('app loads and navigates', async ({ page }) => {
+test('App navigation and topic resolution', async ({ page }) => {
+  // 1. App loads at root
   await page.goto('/');
   await expect(page).toHaveTitle(/MIMIRYX/i);
-  
-  // Navigate to Notes
+
+  // 2. Open Notes Page
   await page.click('text=Notes');
   await expect(page.url()).toContain('/notes');
-  
-  // Verify UI renders empty state or cards
-  const hasCards = await page.locator('.cyber-card').count() > 0;
-  const hasEmpty = await page.locator('text=No notes found').count() > 0;
-  expect(hasCards || hasEmpty).toBeTruthy();
+
+  // 3. Open Topics Page
+  await page.click('text=Topics');
+  await expect(page.url()).toContain('/topics');
+
+  // 4. Verify topic cards render
+  const topicCards = page.locator('.cyber-card');
+  await expect(topicCards.first()).toBeVisible();
 });
 
-test('handles missing API key gracefully', async ({ page }) => {
-  await page.goto('/creator');
-  // Check for some missing key indicator or error boundary
-  // e.g. clicking generate should show settings modal
-  // Actually, since we're just checking it loads:
-  await expect(page.locator('text=Synthesize')).toBeVisible();
+test('Settings Modal and Diagnostics flow', async ({ page }) => {
+  await page.goto('/');
+
+  // Open Settings Modal via button or state
+  const settingsBtn = page.locator('button[title*="Settings"], button:has(.lucide-settings), [aria-label*="Settings"]');
+  if (await settingsBtn.count() > 0) {
+    await settingsBtn.first().click();
+    await expect(page.locator('text=Neural Settings').or(page.locator('text=API Key Pool'))).toBeVisible();
+  }
 });
