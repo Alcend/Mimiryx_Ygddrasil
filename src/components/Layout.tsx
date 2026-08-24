@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -6,6 +6,7 @@ import { useApp } from '../context/AppContext';
 import { DigitalVinesFrame } from './DigitalVinesFrame';
 import { SettingsModal } from './SettingsModal';
 import { OracleChat } from './OracleChat';
+import { ErrorBoundary } from './ErrorBoundary';
 
 export const Layout: React.FC = () => {
   const { customBg, bgOpacity, bgBlur, autoDim, isSidebarOpen } = useApp();
@@ -86,9 +87,18 @@ export const Layout: React.FC = () => {
           <Header />
         </div>
         
-        {/* Pass isIdle to Outlet context so Dashboard can read it if needed, or we just handle it globally */}
+        {/* Pass isIdle to Outlet context wrapped in ErrorBoundary and Suspense */}
         <main className="flex-1 flex flex-col min-h-0 overflow-y-auto p-3 sm:p-4 lg:p-6 transition-all duration-700 w-full max-w-[1700px] mx-auto">
-          <Outlet context={{ isIdle }} />
+          <ErrorBoundary>
+            <Suspense fallback={
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] space-y-3">
+                <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                <span className="text-xs font-mono text-primary/70 tracking-widest uppercase animate-pulse">Initializing Neural Node...</span>
+              </div>
+            }>
+              <Outlet context={{ isIdle }} />
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
       
