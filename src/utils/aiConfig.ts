@@ -3,7 +3,7 @@ export const GEMINI_API_VERSION = 'v1beta';
 export const GEMINI_MODELS = {
   // Use exact strings based on the API error message provided by the user
   research: 'gemini-3.6-flash',
-  synthesis: 'gemini-2.5-flash',
+  synthesis: 'gemini-3.6-flash',
   structure: 'gemini-3.6-flash',
   embedding: 'embedding-001',
 };
