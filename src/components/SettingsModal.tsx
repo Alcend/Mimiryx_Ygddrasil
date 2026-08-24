@@ -1,3 +1,4 @@
+// Intentionally static: aiConfig is lightweight (3.9KB) and side-effect free, eliminating dual-import bundler warnings
 import { checkGeminiConfiguration } from '../utils/aiConfig';
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';

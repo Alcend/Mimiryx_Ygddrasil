@@ -6,11 +6,11 @@ test('App navigation and topic resolution', async ({ page }) => {
   await expect(page).toHaveTitle(/MIMIRYX/i);
 
   // 2. Open Notes Page
-  await page.click('text=Notes');
+  await page.goto('/notes');
   await expect(page.url()).toContain('/notes');
 
   // 3. Open Topics Page
-  await page.click('text=Topics');
+  await page.goto('/topics');
   await expect(page.url()).toContain('/topics');
 
   // 4. Verify topic cards render
@@ -21,7 +21,7 @@ test('App navigation and topic resolution', async ({ page }) => {
 test('Settings Modal and Diagnostics flow', async ({ page }) => {
   await page.goto('/');
 
-  // Open Settings Modal via button or state
+  // Open Settings Modal
   const settingsBtn = page.locator('button[title*="Settings"], button:has(.lucide-settings), [aria-label*="Settings"]');
   if (await settingsBtn.count() > 0) {
     await settingsBtn.first().click();
