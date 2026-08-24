@@ -34,3 +34,8 @@ When parsing multiline user input (like API keys) using Javascript regex literal
 Whenever introducing `React.lazy()` dynamic imports:
 1. A `<Suspense fallback={...}>` boundary is **mandatory** directly above the lazy components or wrapping the routing `<Outlet />`. Never commit code-splitting without a visible fallback component, or React will throw an uncaught error and unmount the entire app into a black screen.
 2. All lazy-loaded routes must be guarded by a React `<ErrorBoundary>` so that unexpected chunk loading failures or network blips render a recoverable UI card rather than crashing the single-page application.
+
+## 9. Ambient Declarations for Vite Client & Subsystem Scripts
+Whenever introducing `import.meta.env` configuration keys or importing root-level JavaScript scripts (such as server-side proxies or worker scripts) into test files:
+1. Extend `ImportMetaEnv` in `src/env.d.ts` with all expected `VITE_*` string keys.
+2. Provide an ambient `.d.ts` declaration file in `src/types/` (and a companion `.d.ts` next to the JS file) so that TypeScript strict-mode compilation passes cleanly in CI without requiring `@ts-ignore`.
