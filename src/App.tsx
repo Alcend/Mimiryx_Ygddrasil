@@ -2,22 +2,22 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { Layout } from './components/Layout';
-import { Dashboard } from './pages/Dashboard';
-import { NotesPage } from './pages/NotesPage';
-import { NoteDetailPage } from './pages/NoteDetailPage';
+const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
+const NotesPage = React.lazy(() => import('./pages/NotesPage').then(module => ({ default: module.NotesPage })));
+const NoteDetailPage = React.lazy(() => import('./pages/NoteDetailPage').then(module => ({ default: module.NoteDetailPage })));
 import { TopicsPage } from './pages/TopicsPage';
 import { TopicDetailPage } from './pages/TopicDetailPage';
 import { LabsPage } from './pages/LabsPage';
 import { LabDetailPage } from './pages/LabDetailPage';
-import { BoardPage } from './pages/BoardPage';
+const BoardPage = React.lazy(() => import('./pages/BoardPage').then(module => ({ default: module.BoardPage })));
 import { MonitorPage } from './pages/MonitorPage';
 import { AssistantPage } from './pages/AssistantPage';
 import { TutorPage } from './pages/TutorPage';
 import { AIAgentPage } from './pages/AIAgentPage';
 import { DataJourneyPage } from './pages/DataJourneyPage';
 import { TemplatesPage } from './pages/TemplatesPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { TopicCreatorPage } from './pages/TopicCreatorPage';
+const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage').then(module => ({ default: module.AnalyticsPage })));
+const TopicCreatorPage = React.lazy(() => import('./pages/TopicCreatorPage').then(module => ({ default: module.TopicCreatorPage })));
 
 export const App: React.FC = () => {
   return (

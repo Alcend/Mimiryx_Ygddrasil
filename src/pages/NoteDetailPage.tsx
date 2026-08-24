@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeSanitize from 'rehype-sanitize';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { NoteStatus, NoteDifficulty } from '../types';
@@ -343,7 +344,7 @@ export const NoteDetailPage: React.FC = () => {
                 <div className="prose prose-invert max-w-none font-mono text-xs">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
+                    rehypePlugins={[rehypeSanitize, rehypeKatex]}
                     components={{
                       hr: ({node, ...props}) => <div className="w-full border-t border-primary/40 border-dashed my-6 relative"><span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#070d14] px-2 text-[9px] text-primary tracking-widest uppercase">Page Break</span></div>,
                       h1: ({node, ...props}) => <h1 className="text-base font-heading font-bold text-foreground mt-4 mb-2 border-b border-border/40 pb-1" {...props} />,

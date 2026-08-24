@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeSanitize from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
 import { Note, Topic } from '../types';
 import { 
@@ -240,7 +241,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
 
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
+                    rehypePlugins={[rehypeSanitize, rehypeKatex]}
                     components={{
                       hr: ({node, ...props}) => <hr className="page-break-line my-8 border-border/40" {...props} />,
                       h1: ({node, ...props}) => <h1 className="text-xl font-heading font-bold text-foreground mt-2 mb-4 border-b border-border/40 pb-2" {...props} />,
