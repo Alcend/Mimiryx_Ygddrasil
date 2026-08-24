@@ -1,0 +1,20 @@
+MIMIRYX Token Logging & Budget Fallback Specification
+
+1. What is Logged:
+   - timestamp: ISO 8601 UTC timestamp of the API call completion.
+   - model: The active Gemini model used (e.g. gemini-3.6-flash or fallback gemini-3.6-flash-lite).
+   - inputTokens: Prompt token count (promptTokenCount from Gemini usageMetadata).
+   - outputTokens: Candidate generation token count (candidatesTokenCount from Gemini usageMetadata).
+   - totalTokens: Aggregate tokens consumed for the single transaction.
+   - monthlyConsumed: Cumulative tokens consumed across the current billing period.
+   - monthlyBudget: Total token ceiling configured in environment (BUDGET_TOKENS, default: 1,000,000).
+   - budgetRemaining: Remaining token allowance.
+
+2. Privacy & Data Minimization:
+   - ZERO raw prompt text, note content, or student PII is written to logs or disk.
+   - Only numeric token counts and model IDs are logged via structured JSON to stdout.
+
+3. Graceful Model Fallback Logic:
+   - When cumulative consumption crosses BUDGET_TOKENS_MONTHLY:
+     a. Primary tier: Automatically downgrades the request to 'gemini-3.6-flash-lite' with lower token depth to preserve availability.
+     b. Hard limit: If fallback quota is also exceeded, returns HTTP 429 { error: 'Monthly token quota completely exhausted', code: 'BUDGET_EXCEEDED' }.

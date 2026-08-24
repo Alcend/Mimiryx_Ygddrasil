@@ -21,7 +21,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught React Error caught by ErrorBoundary:', error, errorInfo);
+    console.error('[NEURAL_ERROR_BOUNDARY] Uncaught exception:', error, errorInfo);
+    // Forward to Sentry if available in global window
+    if ((window as any).Sentry?.captureException) {
+      (window as any).Sentry.captureException(error, { extra: errorInfo });
+    }
   }
 
   public render() {

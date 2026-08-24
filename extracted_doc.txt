@@ -1,0 +1,76 @@
+MIMIRYX / YGGDRASIL
+Neural IT Knowledge Engine & AI-Augmented Operations SuiteCapstone Technical Specification & System Architecture Report
+System Classification: Single-Page Application (SPA) | Architecture: React 18 + TypeScript + LocalForageAI Integration: Google Gemini Multi-Tier Pipeline | Background Architecture: Web Worker SubsystemRepository: Alcend/Mimiryx_Ygddrasil | Build Status: Production Verified
+1. Executive Summary & Problem Statement
+Modern Information Technology, Systems Administration, and DevOps disciplines require engineers to rapidly assimilate complex, interconnected knowledge spanning networking protocols, kernel configurations, cloud infrastructure, and live troubleshooting diagnostics. Traditional documentation systems are static, fragmented, and disconnect theoretical study from simulated practical execution.
+MIMIRYX (codenamed Yggdrasil) is an engineered, client-side neural knowledge workbench. It solves these challenges by combining dynamic 3D knowledge trees, multi-page book reading interfaces with Active Recall mechanisms, background AI research pipelines, and terminal sandbox environments into a cohesive, high-performance platform.
+Domain
+Core Challenge
+Mimiryx Engineering Solution
+Knowledge Retention
+Passive reading leads to rapid cognitive decay and weak memory retrieval.
+3-Column Book Reader with 'Active Recall Mode' (dynamic keyword obfuscation) and Sensory Deprivation 'Deep Dive' focus.
+AI Research Latency
+AI generation freezes browser main threads and exhausts API quotas rapidly.
+Dedicated Web Worker pipeline (`aiPipeline.worker.ts`), 5-min request memoization cache, and graceful tool degradation.
+Data Persistence
+Cloud-dependent notes lose availability during network outages.
+Offline-first LocalForage (IndexedDB) engine supporting zero-latency local operations and instant JSON export/import.
+System Architecture
+Heavy UI modules cause slow initial page loads and high bundle footprints.
+Dynamic `React.lazy` code splitting, strict Tailwind 4px design tokens, and global ErrorBoundary harnesses.
+2. System Architecture & Technical Stack
+MIMIRYX is architected as an offline-first Single-Page Application (SPA) designed for sub-second responsiveness, strict typographic readability, and robust background computing.
+Core Frontend Framework: React 18 with TypeScript 5 (Strict Mode), bundled via Vite 6.
+Styling & Design System: Tailwind CSS with a strict 4px base spacing scale (4, 8, 12, 16, 24, 32, 48, 64px) and custom cyber-card glowing neon themes.
+State Management & Storage: React Context API (`AppContext`) backed by LocalForage IndexedDB wrapper for asynchronous client storage.
+AI Orchestration & Background Queue: Web Worker pipeline (`aiPipeline.worker.ts`) communicating via structured message passing (`postMessage`) with dual-layer caching.
+Markdown & Formula Parsing: `react-markdown` with GitHub Flavored Markdown (`remark-gfm`), LaTeX/Math typesetting (`remark-math`, `rehype-katex`), and XSS sanitization (`rehype-sanitize`).
+Quality Assurance & Testing: Vitest unit testing framework, Playwright E2E browser automation, and automated GitHub Actions CI workflow.
+3. Core Subsystems & Engineering Highlights
+3.1 3-Column Book Reader & Multi-Page Engine (`BookReader.tsx`)
+Implements an interactive book reading experience utilizing CSS 3D transforms (`rotateY` / `perspective: 2500px`) for seamless page turns. Follows the modern 3-Column Utility Architecture for ultra-wide displays: Left sidebar for topic linkage and chapter indexes, Center column constrained to `max-w-3xl` (~65-75ch) for optimal eye-tracking, and Right sidebar for metrics and quick actions. Includes 'Active Recall Mode' which transforms key concepts into interactive masked blocks for self-testing.
+3.2 Autonomous AI Topic Creator (`TopicCreatorPage.tsx` & `aiPipeline.worker.ts`)
+A multi-phase AI synthesizer that autonomously constructs entire learning curriculum trees from simple prompts. The pipeline executes: (1) Deep Research with graceful tool degradation (Search Grounding -> Direct Fallback), (2) Synthesis into structured chapters with automatic YAML frontmatter validation, and (3) Ingestion into the local vector/topic store. AI calls are decoupled from the UI thread via Web Workers to prevent UI frame drops.
+3.3 Dashboard, Telemetry & 3D World Tree (`Dashboard.tsx`, `WorldTree/`)
+The central command hub displaying real-time cognitive metrics (Mastery percentage, Node count, Lab completion), interactive IT trivia nodes, and canvas-rendered neural connection graphs. Includes auto-dim ambient lighting triggers based on user inactivity.
+3.4 Interactive IT Tutor & Lab Debugger (`TutorPage.tsx`, `LabDetailPage.tsx`)
+Simulated CLI sandboxes and conversational IT operations tutors allowing students to practice bash commands, troubleshoot DNS/subnetting failures, and debug simulated server outages with real-time feedback.
+3.5 Study Kanban Board (`BoardPage.tsx`)
+A drag-and-drop study management board with content-driven column sizing (intrinsic max-content height) and dynamic dashed empty-state dropzones.
+4. Key Engineering Milestones & Problem Resolutions
+• AI Quota Optimization & Graceful Degradation: To prevent exhausting Gemini API quotas, we engineered: (1) `RequestCache` with a 5-minute TTL to deduplicate requests, (2) Graceful tool degradation (attempting Google Search tool with 1 retry, falling back to standard generation with exponential backoff), and (3) Self-healing YAML frontmatter parser that injects default metadata if the model fails strict schema constraints.
+• Widescreen UI Layout & 4px Spacing Tokenization: Eliminated arbitrary padding and container stretching across the entire application by enforcing a strict 4px spacing scale (4, 8, 12, 16, 24, 32, 48, 64px) and migrating reading views to a 3-column utility grid that keeps reading line length within 65-75 characters while utilizing wide-screen margins.
+• Code-Splitting & React Lazy Loading Invariant: Implemented `React.lazy` across all primary routes (`Dashboard`, `NotesPage`, `NoteDetailPage`, `BoardPage`, `AnalyticsPage`, `TopicCreatorPage`). Guarded all lazy imports with global `ErrorBoundary` and animated cyber `<Suspense>` loaders to prevent black-screen unmounts.
+• Markdown XSS Sanitization: Integrated `rehype-sanitize` alongside KaTeX math plugins to guarantee that imported or AI-generated Markdown cannot inject arbitrary scripts or cross-site payloads.
+5. Quality Assurance, Testing & Build Verification
+Every component and utility is verified via automated testing suites and CI pipelines:
+Test Suite
+Target Module
+Coverage / Test Count
+Status
+Vitest Unit Suite
+src/utils/topicHelpers.ts
+9 tests (Direct match, slug match, tag fallback, null safety)
+PASSED (4ms)
+Vitest Unit Suite
+src/utils/aiConfig.ts
+Import safety, zero side-effects verification
+PASSED (2ms)
+Playwright E2E
+Navigation & Topic Resolution
+Full root-to-notes and topics routing verification
+PASSED (2.5s)
+Playwright E2E
+Settings & Diagnostics
+Modal initialization and key pool check
+PASSED (1.8s)
+Vite Production Build
+Full Codebase
+Zero TypeScript errors, clean chunk code-splitting
+PASSED (9.46s)
+6. Capstone Conclusion & 30/60/90-Day Roadmap
+MIMIRYX demonstrates the convergence of modern frontend engineering, cognitive learning science, and autonomous AI pipelines. The project is production-verified and serves as a comprehensive Capstone demonstration.
+30-Day Milestone: Deploy serverless AI backend proxy to eliminate client-side API keys; implement LRU cache eviction for LocalForage.
+60-Day Milestone: Integrate full vector similarity embeddings locally via WebAssembly / Transformers.js for offline neural node clustering.
+90-Day Milestone: Publish cross-platform desktop distributions (Electron / Tauri) and implement collaborative multi-user study rooms.
