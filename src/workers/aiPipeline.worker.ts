@@ -6,6 +6,7 @@ import {
   getKeyUsage,
   updateKeyUsage
 } from '../db/aiJobsStore';
+import { requestCache } from '../utils/requestCache';
 import { 
   streamResearch, 
   streamSynthesis, 
@@ -154,56 +155,77 @@ const runPipeline = async (job: AIJob) => {
     await updateJob(job.id, { status: 'RESEARCHING' });
     self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
     
-    let currentResearch = '';
+    const researchCacheKey = requestCache.generateKey(job.topic, 'research');
+    let fullResearch = requestCache.get(researchCacheKey);
+    let grounding: any = { searchQueries: [], webUrls: [] };
     
-    // We'll use a chunk watchdog here to prevent infinite hangs
-    let lastChunkTime = Date.now();
-    let isDone = false;
-    
-    const watchdog = setInterval(() => {
-      if (!isDone && Date.now() - lastChunkTime > 15000) {
-        // 15 seconds without a chunk = hang
-        console.error(`[AI Worker] Watchdog timeout on job ${job.id}`);
-        // This is a simplistic watchdog; in reality, we'd need to abort the fetch request.
-        // For now, we'll just throw which breaks the flow.
-        throw new Error('STREAM_TIMEOUT');
-      }
-    }, 5000);
-
-    const { text: fullResearch, grounding } = await streamResearch(
-      job.topic,
-      apiKey,
-      async (chunk) => {
-        lastChunkTime = Date.now();
-        currentResearch += chunk;
-        // Throttle DB updates during streaming to avoid overwhelming IndexedDB
-        if (Math.random() < 0.1) {
-          await updateJob(job.id, { researchText: currentResearch });
-          self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
+    if (fullResearch) {
+      console.log(`[AI Worker] Memory cache hit for Research: ${job.topic}`);
+      await updateJob(job.id, { researchText: fullResearch });
+      self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
+    } else {
+      let currentResearch = '';
+      
+      // We'll use a chunk watchdog here to prevent infinite hangs
+      let lastChunkTime = Date.now();
+      let isDone = false;
+      
+      const watchdog = setInterval(() => {
+        if (!isDone && Date.now() - lastChunkTime > 15000) {
+          console.error(`[AI Worker] Watchdog timeout on job ${job.id}`);
+          throw new Error('STREAM_TIMEOUT');
         }
-      }
-    );
-    
-    isDone = true;
-    clearInterval(watchdog);
-    await updateJob(job.id, { researchText: fullResearch, grounding });
+      }, 5000);
+
+      const researchRes = await streamResearch(
+        job.topic,
+        apiKey,
+        async (chunk) => {
+          lastChunkTime = Date.now();
+          currentResearch += chunk;
+          if (Math.random() < 0.1) {
+            await updateJob(job.id, { researchText: currentResearch });
+            self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
+          }
+        }
+      );
+      
+      fullResearch = researchRes.text;
+      grounding = researchRes.grounding;
+      
+      isDone = true;
+      clearInterval(watchdog);
+      
+      requestCache.set(researchCacheKey, fullResearch);
+      await updateJob(job.id, { researchText: fullResearch, grounding });
+    }
 
     // 4. Structuring Phase
     await updateJob(job.id, { status: 'STRUCTURING' });
     self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
     
-    let currentSynthesis = '';
-    const fullSynthesis = await streamSynthesis(
-      fullResearch,
-      apiKey,
-      async (chunk) => {
-        currentSynthesis += chunk;
-        if (Math.random() < 0.1) {
-          await updateJob(job.id, { synthesisText: currentSynthesis });
-          self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
+    const synthesisCacheKey = requestCache.generateKey(job.topic, 'synthesis');
+    let fullSynthesis = requestCache.get(synthesisCacheKey);
+    
+    if (fullSynthesis) {
+      console.log(`[AI Worker] Memory cache hit for Synthesis: ${job.topic}`);
+      await updateJob(job.id, { synthesisText: fullSynthesis });
+      self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
+    } else {
+      let currentSynthesis = '';
+      fullSynthesis = await streamSynthesis(
+        fullResearch,
+        apiKey,
+        async (chunk) => {
+          currentSynthesis += chunk;
+          if (Math.random() < 0.1) {
+            await updateJob(job.id, { synthesisText: currentSynthesis });
+            self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
+          }
         }
-      }
-    );
+      );
+      requestCache.set(synthesisCacheKey, fullSynthesis);
+    }
     
     // Self-healing validation: if the model didn't produce YAML frontmatter, inject one
     let validatedSynthesis = fullSynthesis;

@@ -142,107 +142,117 @@ export const streamResearch = async (
 ): Promise<{ text: string; grounding: GroundingMetadata }> => {
   if (!apiKey) throw new Error('No API key provided.');
 
-  const payload = {
-    contents: [{ parts: [{ text: `Research this topic comprehensively: ${topic}. Provide historical context, technical details, current state of the art, and core concepts. Be extremely detailed.` }] }],
-    tools: [{ googleSearch: {} }],
-    generationConfig: {
-      temperature: 0.3,
-    }
-  };
+  // Try with tools first, fall back to simple generation
+  const attempts = [
+    { useTools: true, maxRetries: 1 },
+    { useTools: false, maxRetries: 2 }
+  ];
 
-  let response: Response | undefined;
-  let retries = 2; // Reduced to minimize quota waste
-  while (retries > 0) {
-    const activeKey = getActiveKey(apiKey);
-    if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
-    console.log('[Gemini StreamResearch] Resolved key:', activeKey.slice(0, 6) + '...' + activeKey.slice(-4), '| Length:', activeKey.length);
-    const currentEndpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.research}:streamGenerateContent?alt=sse&key=${activeKey}`;
-    
-    if (retries <= 2 && (payload as any).tools) {
-      console.warn("Dropping Google Search tool due to persistent Quota errors...");
-      delete (payload as any).tools;
-    }
+  for (const attempt of attempts) {
+    let retries = attempt.maxRetries;
+    while (retries > 0) {
+      const activeKey = getActiveKey(apiKey);
+      if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
+      console.log(`[Gemini StreamResearch] Resolved key: ${activeKey.slice(0, 6)}...${activeKey.slice(-4)} | Attempt: Tools=${attempt.useTools}`);
 
-    response = await fetch(currentEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    
-    const isQuotaError = response.status === 429 || response.status === 403 || response.status === 400;
-    if (isQuotaError) {
-      if (retries > 2) {
-        markKeyDepleted(activeKey);
+      const payload: any = {
+        contents: [{ 
+          parts: [{ 
+            text: `Research this topic comprehensively: ${topic}. Provide historical context, technical details, current state of the art, and core concepts. Be extremely detailed.` 
+          }] 
+        }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
+      };
+
+      // Only add tools if this attempt allows it
+      if (attempt.useTools) {
+        payload.tools = [{ googleSearch: {} }];
       }
-      await new Promise(r => setTimeout(r, 1000));
-      retries--;
-      continue;
-    }
-    break;
-  }
 
-  if (!response) throw new Error('Failed to connect to API after multiple retries.');
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || 'Failed to communicate with Gemini for research.');
-  }
+      const currentEndpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.research}:streamGenerateContent?alt=sse&key=${activeKey}`;
 
-  if (!response.body) throw new Error('No response body');
+      try {
+        const response = await fetch(currentEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let fullText = '';
-  const grounding: GroundingMetadata = { searchQueries: [], webUrls: [] };
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    
-    buffer += decoder.decode(value, { stream: true });
-    
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-    
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const dataStr = line.slice(6).trim();
-        if (dataStr === '[DONE]') continue;
-        
-        try {
-          const parsed = JSON.parse(dataStr);
-          const candidate = parsed.candidates?.[0];
-          
-          if (candidate?.content?.parts?.[0]?.text) {
-            const chunk = candidate.content.parts[0].text;
-            fullText += chunk;
-            onChunk(chunk);
-          }
-
-          const meta = candidate?.groundingMetadata;
-          if (meta) {
-            if (meta.webSearchQueries) {
-              grounding.searchQueries = [...new Set([...(grounding.searchQueries || []), ...meta.webSearchQueries])];
-            }
-            if (meta.groundingChunks) {
-              const urls = meta.groundingChunks
-                .map((c: any) => c.web?.uri)
-                .filter(Boolean);
-              grounding.webUrls = [...new Set([...(grounding.webUrls || []), ...urls])];
-            }
-          }
-        } catch (e) {
+        const isQuotaError = response.status === 429 || response.status === 403 || response.status === 400;
+        if (isQuotaError) {
+          markKeyDepleted(activeKey);
+          if (retries === 1) break; // Move to next attempt in outer loop
+          await new Promise(r => setTimeout(r, 1000 * (attempt.maxRetries - retries + 1))); // Exponential backoff
+          retries--;
+          continue;
         }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error?.message || 'API error');
+        }
+
+        if (!response.body) throw new Error('No response body');
+
+        // Process response stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let fullText = '';
+        const grounding: GroundingMetadata = { searchQueries: [], webUrls: [] };
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const dataStr = line.slice(6).trim();
+              if (dataStr === '[DONE]') continue;
+              
+              try {
+                const parsed = JSON.parse(dataStr);
+                const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (chunk) {
+                  fullText += chunk;
+                  onChunk(chunk);
+                }
+
+                const meta = parsed.candidates?.[0]?.groundingMetadata;
+                if (meta) {
+                  if (meta.webSearchQueries) {
+                    grounding.searchQueries = [...new Set([...(grounding.searchQueries || []), ...meta.webSearchQueries])];
+                  }
+                  if (meta.groundingChunks) {
+                    const urls = meta.groundingChunks
+                      .map((c: any) => c.web?.uri)
+                      .filter(Boolean);
+                    grounding.webUrls = [...new Set([...(grounding.webUrls || []), ...urls])];
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+        if (attempt.useTools && (!grounding.webUrls || grounding.webUrls.length === 0)) {
+          console.warn('[Gemini] Weak grounding detected, continuing without grounding URLs.');
+        }
+
+        return { text: fullText, grounding }; // SUCCESS - exit immediately
+      } catch (err: any) {
+        console.warn(`[Research] Attempt with tools=${attempt.useTools} failed:`, err);
+        if (retries === 1) break; // Exhausted retries for this attempt phase
+        retries--;
       }
     }
   }
-  
-  if ((payload as any).tools && (!grounding.webUrls || grounding.webUrls.length === 0)) {
-    console.warn('[Gemini] Weak grounding detected, continuing without grounding URLs.');
-  }
-  
-  return { text: fullText, grounding };
+
+  throw new Error('Research failed after all fallback attempts exhausted.');
 };
 
 export const streamSynthesis = async (
@@ -272,7 +282,7 @@ summary: "1-sentence summary"
     contents: [
       { parts: [{ text: `${sysPrompt}\n\nHere is the Raw Research to process:\n\n${rawResearch}` }] }
     ],
-    generationConfig: { temperature: 0.2 }
+    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
   };
 
   let response: Response | undefined;
@@ -281,7 +291,7 @@ summary: "1-sentence summary"
     const activeKey = getActiveKey(apiKey);
     if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
     console.log('[Gemini StreamSynthesis] Resolved key:', activeKey.slice(0, 6) + '...' + activeKey.slice(-4), '| Length:', activeKey.length);
-    const currentEndpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.research}:streamGenerateContent?alt=sse&key=${activeKey}`;
+    const currentEndpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.synthesis}:streamGenerateContent?alt=sse&key=${activeKey}`;
     response = await fetch(currentEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
