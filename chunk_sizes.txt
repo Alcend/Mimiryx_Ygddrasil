@@ -1,9 +1,9 @@
-MIMIRYX Production Chunk Sizes:
-- index-562n8hok.js (Main App Shell): 155.73 kB unminified | 45.54 kB gzipped
+MIMIRYX Production Chunk Sizes (Lazy KaTeX Split):
+- index-DdRV8qmh.js (Main App Shell): 155.70 kB unminified | 45.53 kB gzipped
+- vendor-markdown-CNd_sigN.js (Markdown Engine): 169.40 kB unminified | 51.68 kB gzipped (Down from 440.03 kB!)
+- vendor-katex-D3yx4sx7.js (Lazy Math Engine): 532.50 kB unminified | 159.12 kB gzipped (Loaded on-demand only when LaTeX is present)
 - vendor-react-tnUCvJ1c.js (React Core): 165.23 kB unminified | 54.03 kB gzipped
-- vendor-markdown-eBxsNA_d.js (Markdown/Math): 440.03 kB unminified | 132.69 kB gzipped
 - index-ClmAqyd4.css (Main CSS): 96.82 kB unminified | 19.22 kB gzipped
-- BookReader-BG_dQQh8.css (Reader CSS): 30.13 kB unminified | 8.05 kB gzipped
-- Dashboard-BF_33TQY.js (Dashboard Route): 51.24 kB unminified | 15.05 kB gzipped
+- Dashboard-BdssuNmV.js (Dashboard Route): 51.24 kB unminified | 15.05 kB gzipped
 - aiPipeline.worker-CNPwTnpp.js (Background Worker): 41.37 kB unminified
-- AnalyticsPage-Ct8KLWmO.js (Analytics Route): 35.14 kB unminified | 7.55 kB gzipped
+- AnalyticsPage-CwSl1BYv.js (Analytics Route): 35.14 kB unminified | 7.56 kB gzipped

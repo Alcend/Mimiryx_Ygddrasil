@@ -1,11 +1,11 @@
-Top 10 Modules in Main App Chunk (index-562n8hok.js) & Dedicated Chunks:
-1. vendor-markdown-eBxsNA_d.js: 440.03 kB (132.69 kB gzip) [Vendor: Math & Markdown Engine]
-2. vendor-react-tnUCvJ1c.js: 165.23 kB (54.03 kB gzip) [Vendor: React, React-DOM, Router]
-3. index-562n8hok.js: 155.73 kB (45.54 kB gzip) [Main Application Shell]
-4. Dashboard-BF_33TQY.js: 51.24 kB (15.05 kB gzip) [Dynamic Route: Dashboard & Canvas]
-5. aiPipeline.worker-CNPwTnpp.js: 41.37 kB (Dedicated AI Web Worker)
-6. AnalyticsPage-Ct8KLWmO.js: 35.14 kB (7.55 kB gzip) [Dynamic Route: Analytics]
-7. NotesPage-C51CQL_m.js: 17.77 kB (4.68 kB gzip) [Dynamic Route: Notes Grid]
-8. LabDetailPage-bs3QihhA.js: 16.71 kB (6.48 kB gzip) [Dynamic Route: CLI Lab Sandbox]
-9. BookReader-D_qEvG3k.js: 16.55 kB (4.68 kB gzip) [Dynamic Component: 3D Reader]
-10. TopicCreatorPage-BrDQNClb.js: 15.84 kB (4.85 kB gzip) [Dynamic Route: Topic Creator]
+Top 10 Modules in Main App Chunk (index-DdRV8qmh.js) & Dedicated Chunks:
+1. vendor-katex-D3yx4sx7.js: 532.50 kB (159.12 kB gzip) [Lazy Chunk: KaTeX Math Engine]
+2. vendor-markdown-CNd_sigN.js: 169.40 kB (51.68 kB gzip) [Vendor: Core Markdown Engine]
+3. vendor-react-tnUCvJ1c.js: 165.23 kB (54.03 kB gzip) [Vendor: React, React-DOM, Router]
+4. index-DdRV8qmh.js: 155.70 kB (45.53 kB gzip) [Main Application Shell]
+5. Dashboard-BdssuNmV.js: 51.24 kB (15.05 kB gzip) [Dynamic Route: Dashboard & Canvas]
+6. aiPipeline.worker-CNPwTnpp.js: 41.37 kB (Dedicated AI Web Worker)
+7. AnalyticsPage-CwSl1BYv.js: 35.14 kB (7.56 kB gzip) [Dynamic Route: Analytics]
+8. NotesPage-DeBmMPcm.js: 17.77 kB (4.69 kB gzip) [Dynamic Route: Notes Grid]
+9. BookReader-De040dB7.js: 17.31 kB (5.02 kB gzip) [Dynamic Component: 3D Reader]
+10. LabDetailPage-CAHiym5p.js: 16.71 kB (6.48 kB gzip) [Dynamic Route: CLI Lab Sandbox]
