@@ -1,0 +1,60 @@
+[
+  {
+    "selector": "button[aria-label=\"Open actions\"]",
+    "exists": false,
+    "visible": false,
+    "box": null
+  },
+  {
+    "selector": "button[aria-label=\"Open Actions\"]",
+    "exists": false,
+    "visible": false,
+    "box": null
+  },
+  {
+    "selector": "button[aria-label=\"Open actions\"]:visible",
+    "exists": false,
+    "visible": false,
+    "box": null
+  },
+  {
+    "selector": ".mobile-actions-fab",
+    "exists": false,
+    "visible": false,
+    "box": null
+  },
+  {
+    "selector": "button:has-text(\"Actions\")",
+    "exists": false,
+    "visible": false,
+    "box": null
+  },
+  {
+    "selector": "button[title=\"Actions\"]",
+    "exists": false,
+    "visible": false,
+    "box": null
+  },
+  {
+    "selector": ".floating-actions button",
+    "exists": false,
+    "visible": false,
+    "box": null
+  },
+  {
+    "selector": ".mobile-actions-fab, .floating-actions button, button[aria-label], button",
+    "exists": true,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 11.5,
+      "width": 32,
+      "height": 32
+    },
+    "innerText": "",
+    "attrs": {
+      "class": "p-1.5 rounded-lg text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors shrink-0",
+      "title": "Toggle Sidebar"
+    }
+  }
+]
