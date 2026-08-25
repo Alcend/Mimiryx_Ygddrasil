@@ -35,8 +35,9 @@ class SoundEngine {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.05);
-    } catch {
+    } catch (e) {
       // Audio autoplay restriction safe fail
+      void e;
     }
   }
 
@@ -65,7 +66,10 @@ class SoundEngine {
 
       osc.start();
       osc.stop(now + 0.45);
-    } catch {}
+    } catch (e) {
+      // intentionally ignore audio probe errors
+      void e;
+    }
   }
 
   public playNodePulse() {
@@ -90,7 +94,10 @@ class SoundEngine {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.12);
-    } catch {}
+    } catch (e) {
+      // intentionally ignore audio probe errors
+      void e;
+    }
   }
 
   public playPageFlip() {
@@ -117,7 +124,10 @@ class SoundEngine {
 
       osc.start();
       osc.stop(now + 0.15);
-    } catch {}
+    } catch (e) {
+      // intentionally ignore audio probe errors
+      void e;
+    }
   }
 
   public playError() {
@@ -143,7 +153,10 @@ class SoundEngine {
 
       osc.start();
       osc.stop(now + 0.25);
-    } catch {}
+    } catch (e) {
+      // intentionally ignore audio probe errors
+      void e;
+    }
   }
 
   private droneOsc1: OscillatorNode | null = null;
@@ -187,7 +200,10 @@ class SoundEngine {
 
       this.droneOsc1.start();
       this.droneOsc2.start();
-    } catch {}
+    } catch (e) {
+      // intentionally ignore audio probe errors
+      void e;
+    }
   }
 
   public stopFocusDrone() {
@@ -200,7 +216,10 @@ class SoundEngine {
         if (this.droneOsc2) { this.droneOsc2.stop(); this.droneOsc2.disconnect(); this.droneOsc2 = null; }
         if (this.droneGain) { this.droneGain.disconnect(); this.droneGain = null; }
       }, 2100);
-    } catch {}
+    } catch (e) {
+      // intentionally ignore audio probe errors
+      void e;
+    }
   }
 }
 

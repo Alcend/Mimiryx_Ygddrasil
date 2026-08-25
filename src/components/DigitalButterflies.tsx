@@ -40,7 +40,10 @@ export const DigitalButterflies: React.FC<DigitalButterfliesProps> = ({ triviaPo
     try {
       const saved = localStorage.getItem('mimiryx:discovered_trivia');
       if (saved) setDiscoveredIds(new Set(JSON.parse(saved)));
-    } catch (e) {}
+    } catch (e) {
+      // intentionally ignore the error; keep the variable for auditability
+      void e;
+    }
   }, [maxCount]);
 
   // Launch WAAPI Flight Animations

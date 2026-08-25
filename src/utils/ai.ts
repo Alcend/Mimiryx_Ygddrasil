@@ -234,7 +234,10 @@ export const streamResearch = async (
                     grounding.webUrls = [...new Set([...(grounding.webUrls || []), ...urls])];
                   }
                 }
-              } catch (e) {}
+              } catch (e) {
+                // intentionally ignore parse errors on partial chunks
+                void e;
+              }
             }
           }
         }
@@ -341,7 +344,10 @@ summary: "1-sentence summary"
             fullText += chunk;
             onChunk(chunk);
           }
-        } catch (e) {}
+        } catch (e) {
+          // intentionally ignore parse errors on partial chunks
+          void e;
+        }
       }
     }
   }

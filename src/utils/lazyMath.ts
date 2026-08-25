@@ -19,9 +19,9 @@ export async function loadMathPlugins(): Promise<MathPlugins> {
   return cachedPlugins;
 }
 
-const MATH_REGEX = /(\${1,2}[^\$]+\${1,2})|(\\\[[\s\S]+?\\\])|(\\\([\s\S]+?\\\))/;
+const MATH_DETECTOR = /(^|[^$])\$\$[\s\S]+?\$\$|(^|[^$])\$(?!\$)[\s\S]+?\$(?!\$)/;
 
 export function containsMath(text: string): boolean {
   if (!text) return false;
-  return MATH_REGEX.test(text);
+  return MATH_DETECTOR.test(text);
 }
