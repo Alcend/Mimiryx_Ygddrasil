@@ -1,0 +1,25 @@
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › tests\e2e\mobile-note.spec.ts:6:1 › Mobile: read note and open actions bottom sheet (30.1s)
+
+
+  1) [chromium] › tests\e2e\mobile-note.spec.ts:6:1 › Mobile: read note and open actions bottom sheet 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.$: Target page, context or browser has been closed
+
+      109 |   // Fallback #1: toggle the sidebar (some builds render actions only in sidebar)
+      110 |   if (!actionsClicked) {
+    > 111 |     const sidebarToggle = await page.$('button[title="Toggle Sidebar"], button[aria-label*="Sidebar"], button[title*="Sidebar"]');
+          |                                      ^
+      112 |     if (sidebarToggle) {
+      113 |       await sidebarToggle.scrollIntoViewIfNeeded().catch(() => {});
+      114 |       await sidebarToggle.click().catch(() => {});
+        at C:\Users\ACER\.gemini\antigravity\scratch\mimiryx-app\tests\e2e\mobile-note.spec.ts:111:38
+
+    Error Context: test-results\mobile-note-Mobile-read-note-and-open-actions-bottom-sheet-chromium\error-context.md
+
+  1 failed
+    [chromium] › tests\e2e\mobile-note.spec.ts:6:1 › Mobile: read note and open actions bottom sheet 
