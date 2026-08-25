@@ -99,11 +99,11 @@ export const CreatorLayout: React.FC = () => {
   const activeJob = mode === 'single' ? jobs[0] : null;
 
   return (
-    <div className="flex flex-col h-full gap-4">
-      <div className="flex items-center gap-4 mb-2">
+    <div className="flex flex-col flex-1 min-h-0 gap-3">
+      <div className="flex items-center gap-2.5 shrink-0">
         <button
           onClick={() => { sounds.playClick(); setMode('single'); }}
-          className={`px-4 py-2 font-mono text-xs uppercase tracking-wider rounded-lg border transition-all ${
+          className={`px-3.5 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg border transition-all ${
             mode === 'single' 
               ? 'bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(var(--color-primary),0.2)]' 
               : 'bg-black/40 border-white/10 text-muted-foreground hover:border-white/30'
@@ -113,7 +113,7 @@ export const CreatorLayout: React.FC = () => {
         </button>
         <button
           onClick={() => { sounds.playClick(); setMode('bulk'); }}
-          className={`px-4 py-2 font-mono text-xs uppercase tracking-wider rounded-lg border transition-all ${
+          className={`px-3.5 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg border transition-all ${
             mode === 'bulk' 
               ? 'bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(var(--color-primary),0.2)]' 
               : 'bg-black/40 border-white/10 text-muted-foreground hover:border-white/30'
@@ -123,13 +123,13 @@ export const CreatorLayout: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-3 shrink-0">
         {mode === 'bulk' ? (
           <textarea 
             value={topicInput}
             onChange={(e) => setTopicInput(e.target.value)}
             placeholder="Paste multiple topics (one per line)..."
-            className="flex-1 h-32 bg-black/60 border border-white/10 rounded-xl px-4 py-3 font-mono text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors resize-none"
+            className="flex-1 h-24 bg-black/60 border border-white/10 rounded-xl px-3.5 py-2 font-mono text-xs sm:text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors resize-none"
           />
         ) : (
           <input 
@@ -137,7 +137,7 @@ export const CreatorLayout: React.FC = () => {
             value={topicInput}
             onChange={(e) => setTopicInput(e.target.value)}
             placeholder="Enter a topic to research..."
-            className="flex-1 bg-black/60 border border-white/10 rounded-xl px-4 py-3 font-mono text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors"
+            className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3.5 py-2 font-mono text-xs sm:text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors"
             onKeyDown={(e) => e.key === 'Enter' && handleStartCreation()}
           />
         )}
@@ -145,42 +145,42 @@ export const CreatorLayout: React.FC = () => {
         <button 
           onClick={handleStartCreation}
           disabled={!topicInput.trim()}
-          className="bg-primary text-primary-foreground font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 h-fit"
+          className="bg-primary text-primary-foreground font-bold px-4 sm:px-5 py-2 rounded-xl hover:opacity-90 transition-opacity flex items-center gap-1.5 disabled:opacity-50 h-fit text-xs sm:text-sm"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           <span>Queue Job</span>
         </button>
       </div>
 
       {mode === 'single' && (
-        <div key={activeJob?.id || 'empty'} className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[500px]">
+        <div key={activeJob?.id || 'empty'} className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 flex-1 min-h-0">
           {/* Left Pane: Raw Dump */}
-          <div className="flex flex-col h-full bg-[#020605] border border-emerald-500/30 rounded-xl overflow-hidden shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
-            <div className="flex items-center justify-between bg-black/40 border-b border-emerald-500/20 px-4 py-2 text-[10px] font-mono text-emerald-500 uppercase">
+          <div className="flex flex-col h-full min-h-0 bg-[#020605] border border-emerald-500/30 rounded-xl overflow-hidden shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
+            <div className="flex items-center justify-between bg-black/40 border-b border-emerald-500/20 px-3.5 py-2 text-[10px] font-mono text-emerald-500 uppercase shrink-0">
               <span className="flex items-center gap-2"><Type className="w-3 h-3" /> RAW SYNAPTIC STREAM</span>
               <span className="opacity-50">
                 {activeJob?.status || 'Idle'}
                 {activeJob?.lastError && <span className="text-red-400 ml-2">({activeJob.lastError})</span>}
               </span>
             </div>
-            <div className="flex-1 p-6 font-mono text-xs text-emerald-400/90 leading-relaxed overflow-y-auto whitespace-pre-wrap">
+            <div className="flex-1 p-4 sm:p-5 font-mono text-xs text-emerald-400/90 leading-relaxed overflow-y-auto whitespace-pre-wrap custom-scrollbar min-h-0">
               {activeJob?.researchText || <span className="opacity-30">Awaiting job...</span>}
               {activeJob?.status === 'RESEARCHING' && <span className="inline-block w-2 h-4 bg-emerald-400 animate-pulse ml-1 align-middle" />}
             </div>
           </div>
 
           {/* Right Pane: Compiled Node (Live Preview) */}
-          <div className="flex flex-col h-full bg-[#070d14] border border-primary/30 rounded-xl overflow-hidden shadow-[inset_0_0_20px_rgba(var(--color-primary),0.05)] relative">
-            <div className="flex items-center justify-between bg-black/40 border-b border-primary/20 px-4 py-2 text-[10px] font-mono text-primary uppercase">
+          <div className="flex flex-col h-full min-h-0 bg-[#070d14] border border-primary/30 rounded-xl overflow-hidden shadow-[inset_0_0_20px_rgba(var(--color-primary),0.05)] relative">
+            <div className="flex items-center justify-between bg-black/40 border-b border-primary/20 px-3.5 py-2 text-[10px] font-mono text-primary uppercase shrink-0">
               <span className="flex items-center gap-2"><BrainCircuit className="w-3 h-3" /> COMPILED NEURAL NODE</span>
               <span className="opacity-50">
                 {activeJob?.status === 'AWAITING_REVIEW' ? (
-                  <button onClick={() => handleReviewPlacement(activeJob.id)} className="bg-primary text-black px-2 py-1 rounded">Review Placement</button>
+                  <button onClick={() => handleReviewPlacement(activeJob.id)} className="bg-primary text-black px-2 py-1 rounded text-xs">Review Placement</button>
                 ) : activeJob?.status}
               </span>
             </div>
             
-            <div className="flex-1 p-6 font-mono text-sm text-foreground leading-relaxed overflow-y-auto whitespace-pre-wrap">
+            <div className="flex-1 p-4 sm:p-5 font-mono text-xs sm:text-sm text-foreground leading-relaxed overflow-y-auto whitespace-pre-wrap custom-scrollbar min-h-0">
               {activeJob?.synthesisText || <span className="opacity-30">Waiting for synthesis layer...</span>}
               {activeJob?.status === 'STRUCTURING' && <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle" />}
             </div>
@@ -189,12 +189,12 @@ export const CreatorLayout: React.FC = () => {
       )}
       
       {mode === 'bulk' && (
-        <div className="flex flex-col flex-1 bg-black/40 border border-white/10 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between bg-black/60 px-4 py-3 border-b border-white/10">
+        <div className="flex flex-col flex-1 min-h-0 bg-black/40 border border-white/10 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between bg-black/60 px-4 py-2.5 border-b border-white/10 shrink-0">
             <h3 className="font-mono text-sm text-white flex items-center gap-2"><List className="w-4 h-4" /> Background Jobs</h3>
             <button onClick={handleClearCompleted} className="text-xs text-muted-foreground hover:text-white">Clear Completed</button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 flex flex-col gap-2 min-h-0 custom-scrollbar">
             {jobs.length === 0 && <div className="text-muted-foreground font-mono text-sm text-center py-8">Queue is empty.</div>}
             {jobs.map(job => (
               <div key={job.id} className="flex items-center justify-between bg-card border border-white/5 p-3 rounded-lg">

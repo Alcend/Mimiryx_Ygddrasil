@@ -10,15 +10,15 @@ export const TopicCreatorPage: React.FC = () => {
   const { theme } = useApp();
   
   return (
-    <div className="flex flex-col h-full gap-4 max-w-[1600px] mx-auto w-full relative">
-      <div className="flex items-center justify-between bg-card/60 backdrop-blur-md border border-white/10 p-4 rounded-2xl cyber-card">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary">
-            <Wand2 className="w-6 h-6" />
+    <div className="flex flex-col flex-1 min-h-0 gap-3 max-w-[1600px] mx-auto w-full relative">
+      <div className="flex items-center justify-between bg-card/60 backdrop-blur-md border border-white/10 px-4 py-2.5 sm:py-3 rounded-xl cyber-card shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="p-2 sm:p-2.5 rounded-lg bg-primary/10 border border-primary/30 text-primary">
+            <Wand2 className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold text-foreground">Topic Creator Engine</h1>
-            <p className="text-sm font-mono text-muted-foreground mt-1">
+            <h1 className="text-lg sm:text-xl font-heading font-bold text-foreground leading-tight">Topic Creator Engine</h1>
+            <p className="text-xs font-mono text-muted-foreground mt-0.5">
               Autonomous research and synthesis module
             </p>
           </div>
