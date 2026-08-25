@@ -28,6 +28,7 @@ import {
   BookOpen,
   ArrowRight,
   Sun,
+  ChevronDown,
 } from 'lucide-react';
 import { sounds } from '../../utils/audio';
 import { useNavigate, useOutletContext } from 'react-router-dom';
@@ -215,7 +216,17 @@ function generateRecursiveCluster(
   }
 }
 
-export const YggdrasilWorldTreeCanvas: React.FC<{ activeRealm?: string | null }> = ({ activeRealm }) => {
+export interface YggdrasilWorldTreeCanvasProps {
+  activeRealm?: string | null;
+  onSelectRealm?: (realm: string) => void;
+  availableRealms?: string[];
+}
+
+export const YggdrasilWorldTreeCanvas: React.FC<YggdrasilWorldTreeCanvasProps> = ({
+  activeRealm,
+  onSelectRealm,
+  availableRealms,
+}) => {
   const { topics: allTopics, notes: allNotes, labs, customBg } = useApp();
 
   // Filter by Realm if specified
@@ -255,7 +266,7 @@ export const YggdrasilWorldTreeCanvas: React.FC<{ activeRealm?: string | null }>
   }, [topics, notes, labs]);
 
   // Fluid Camera Engine (Smooth pan/zoom via lerp)
-  const cam = useRef<Cam>({ x: 0, y: 35, zoom: 0.55, tx: 0, ty: 35, tz: 0.55 });
+  const cam = useRef<Cam>({ x: 0, y: 35, zoom: 0.65, tx: 0, ty: 35, tz: 0.65 });
 
   // ── Build Tree Hierarchy with Curved Bézier Geometry ──
   const treeNodes = useMemo(() => {
@@ -360,11 +371,11 @@ export const YggdrasilWorldTreeCanvas: React.FC<{ activeRealm?: string | null }>
 
     // 4. Lower Roots (Foundations)
     const ROOT_FOUNDATIONS = [
-      { id: 'root-0', title: 'Computational Logic & Graph Theory', angleRatio: 0.15, len: 190 },
-      { id: 'root-1', title: 'Systems & Kernel Architecture', angleRatio: 0.35, len: 230 },
-      { id: 'root-2', title: 'Network Theory & Routing Dynamics', angleRatio: 0.50, len: 240 },
-      { id: 'root-3', title: 'Consensus & State Machine Replication', angleRatio: 0.65, len: 230 },
-      { id: 'root-4', title: 'Information Theory & Cryptography', angleRatio: 0.85, len: 190 },
+      { id: 'root-0', title: 'Computational Logic & Graph Theory', angleRatio: 0.15, len: 215 },
+      { id: 'root-1', title: 'Systems & Kernel Architecture', angleRatio: 0.35, len: 260 },
+      { id: 'root-2', title: 'Network Theory & Routing Dynamics', angleRatio: 0.50, len: 275 },
+      { id: 'root-3', title: 'Consensus & State Machine Replication', angleRatio: 0.65, len: 260 },
+      { id: 'root-4', title: 'Information Theory & Cryptography', angleRatio: 0.85, len: 215 },
     ];
 
     ROOT_FOUNDATIONS.forEach((rf, ri) => {
@@ -1083,15 +1094,15 @@ export const YggdrasilWorldTreeCanvas: React.FC<{ activeRealm?: string | null }>
     sounds.playClick();
     cam.current.tx = 0;
     cam.current.ty = 35;
-    cam.current.tz = 0.55;
+    cam.current.tz = 0.65;
     setPinnedBranch(null);
   };
 
   return (
-    <div className={`relative w-full h-[450px] lg:h-[520px] overflow-hidden rounded-2xl select-none transition-colors duration-700 ${
+    <div className={`relative w-full h-full min-h-[580px] lg:min-h-[640px] overflow-hidden select-none transition-colors duration-700 ${
       isIdle 
-        ? 'bg-transparent border-transparent shadow-none' 
-        : 'border border-primary/30 cyber-card shadow-2xl bg-[#030810]'
+        ? 'bg-transparent' 
+        : 'bg-[#030810]'
     }`}>
       <canvas
         ref={canvasRef}
@@ -1213,6 +1224,29 @@ export const YggdrasilWorldTreeCanvas: React.FC<{ activeRealm?: string | null }>
           <div className="pt-1 text-[9px] font-mono text-primary flex items-center justify-between border-t border-border/30">
             <span>Click to lock & view details</span>
             <span>↵</span>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Pill Overlay for Realms Selection (Bottom-Left) */}
+      {availableRealms && availableRealms.length > 0 && onSelectRealm && (
+        <div className="absolute bottom-4 left-4 z-20">
+          <div className="relative inline-flex items-center">
+            <select
+              value={activeRealm || 'ALL'}
+              onChange={(e) => {
+                sounds.playClick();
+                onSelectRealm(e.target.value);
+              }}
+              className="appearance-none bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 hover:border-primary/50 text-foreground hover:text-primary transition-all text-xs font-mono pl-3.5 pr-8 py-2 rounded-full outline-none cursor-pointer tracking-wider shadow-lg flex items-center gap-1.5 focus:ring-1 focus:ring-primary/50"
+            >
+              {availableRealms.map((realm) => (
+                <option key={realm} value={realm} className="bg-[#0b101a] text-foreground font-mono">
+                  {realm === 'ALL' ? 'All realms' : realm}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-3 pointer-events-none" />
           </div>
         </div>
       )}

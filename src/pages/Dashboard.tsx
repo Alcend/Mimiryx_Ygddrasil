@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { YggdrasilWorldTreeCanvas } from '../components/WorldTree/YggdrasilWorldTreeCanvas';
 import { useApp } from '../context/AppContext';
 import { useNavigate, useOutletContext } from 'react-router-dom';
@@ -103,27 +103,14 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Unified Arena: Tree (Left) + Analytics & Monitor Rail (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
-        {/* Left Column: Digital Yggdrasil Tree Organism + Daily Knowledge Recall */}
-        <div className={`flex flex-col min-h-0 gap-3 lg:col-span-8 transition-all duration-700 ease-in-out ${isIdle ? 'opacity-10' : 'opacity-100'}`}>
-
-
-
-          {/* Yggdrasil Canvas Viewport */}
-          <div className="w-full relative flex-1 min-h-0 rounded-2xl overflow-hidden border border-border/40 cyber-card shadow-[0_0_15px_rgba(0,240,255,0.05)]">
-            <div className="absolute bottom-4 left-4 z-20">
-              <select
-                value={activeRealm}
-                onChange={(e) => { sounds.playClick(); setActiveRealm(e.target.value); }}
-                className="bg-black/80 backdrop-blur-md border border-white/10 text-primary hover:bg-black hover:border-primary/50 transition-all text-[10px] font-mono font-bold px-3 py-2 rounded-lg outline-none cursor-pointer uppercase tracking-wider shadow-[0_0_15px_rgba(0,0,0,0.5)]"
-              >
-                {availableRealms.map(realm => (
-                  <option key={realm} value={realm} className="bg-[#0b101a] text-foreground font-mono">
-                    {realm === 'ALL' ? 'ALL REALMS' : realm}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <YggdrasilWorldTreeCanvas activeRealm={activeRealm} />
+        {/* Left Column: Digital Yggdrasil World Tree Canvas (Full-Bleed Unified Scene) */}
+        <div className={`flex flex-col min-h-0 flex-1 lg:col-span-8 transition-all duration-700 ease-in-out ${isIdle ? 'opacity-10' : 'opacity-100'}`}>
+          <div className="w-full h-full min-h-[580px] lg:min-h-[640px] relative flex-1 rounded-2xl overflow-hidden border border-border/40 cyber-card shadow-[0_0_20px_rgba(0,240,255,0.05)] bg-[#030810]">
+            <YggdrasilWorldTreeCanvas
+              activeRealm={activeRealm}
+              onSelectRealm={setActiveRealm}
+              availableRealms={availableRealms}
+            />
           </div>
         </div>
 
