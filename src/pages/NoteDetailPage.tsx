@@ -24,6 +24,7 @@ import {
 import { sounds } from '../utils/audio';
 import { BookReader } from '../components/BookReader';
 import { getNoteExpandPrompt, getNoteFormatPrompt, generateGeminiResponse } from '../utils/ai';
+import { stripFrontmatterAndTitle } from '../utils/contentParser';
 
 export const NoteDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -381,7 +382,7 @@ export const NoteDetailPage: React.FC = () => {
                       td: ({node, ...props}) => <td className="p-3 text-muted-foreground" {...props} />
                     }}
                   >
-                    {content || '*Awaiting synaptic input...*'}
+                    {stripFrontmatterAndTitle(content || '*Awaiting synaptic input...*', title)}
                   </ReactMarkdown>
                 </div>
               </div>

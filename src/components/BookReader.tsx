@@ -25,6 +25,7 @@ import {
 import { sounds } from '../utils/audio';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { stripFrontmatterAndTitle } from '../utils/contentParser';
 
 interface BookReaderProps {
   note: Note;
@@ -42,7 +43,8 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
   const [mathPlugins, setMathPlugins] = useState<MathPlugins | null>(null);
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
 
-  const pages = note.content.split('[PAGE_BREAK]').map(p => p.trim()).filter(Boolean);
+  const cleanedContent = stripFrontmatterAndTitle(note.content, note.title);
+  const pages = cleanedContent.split('[PAGE_BREAK]').map(p => p.trim()).filter(Boolean);
   const pagesCount = pages.length;
 
   // Dynamically load KaTeX plugins only if note content has math
