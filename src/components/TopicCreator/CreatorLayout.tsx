@@ -57,6 +57,19 @@ export const CreatorLayout: React.FC = () => {
         await createJob(item);
       }
     } else {
+      // 1. Clear/reset the panel content immediately when a new job is queued
+      // Ensure the component re-renders and old content isn't reused by pushing an optimistic job
+      setJobs([{ 
+        id: crypto.randomUUID(), 
+        topic: topicInput.trim(), 
+        topicHash: '', 
+        status: 'QUEUED', 
+        createdAt: Date.now(), 
+        updatedAt: Date.now(), 
+        retryCount: 0, 
+        maxRetries: 3 
+      }, ...jobs]);
+      
       await createJob(topicInput.trim());
     }
     
@@ -140,7 +153,7 @@ export const CreatorLayout: React.FC = () => {
       </div>
 
       {mode === 'single' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[500px]">
+        <div key={activeJob?.id || 'empty'} className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[500px]">
           {/* Left Pane: Raw Dump */}
           <div className="flex flex-col h-full bg-[#020605] border border-emerald-500/30 rounded-xl overflow-hidden shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
             <div className="flex items-center justify-between bg-black/40 border-b border-emerald-500/20 px-4 py-2 text-[10px] font-mono text-emerald-500 uppercase">
