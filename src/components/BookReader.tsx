@@ -143,8 +143,8 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
         
         {/* LEFT SIDEBAR: Navigation / Sibling Notes */}
         {!isFocusMode && (
-          <aside className="hidden xl:flex flex-col w-64 shrink-0 space-y-4 pt-2 sticky top-4 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pr-2">
-            <div className="p-4 rounded-xl bg-card border border-primary/20 space-y-3">
+          <aside className="hidden xl:flex flex-col w-64 shrink-0 space-y-4 pt-2 sticky top-4 self-start h-fit max-h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar pr-2">
+            <div className="p-4 rounded-xl bg-card/90 backdrop-blur-md border border-primary/20 space-y-3 shadow-lg">
               <h3 className="text-[10px] font-mono uppercase text-muted-foreground flex items-center gap-1.5">
                 <BookMarked className="w-3 h-3 text-primary" /> Suggested Linkages
               </h3>
@@ -162,7 +162,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
             
             {/* Table of Contents / Pages */}
             {pagesCount > 1 && (
-              <div className="p-4 rounded-xl bg-card border border-border space-y-3">
+              <div className="p-4 rounded-xl bg-card/90 backdrop-blur-md border border-border/70 space-y-3 shadow-lg">
                 <h3 className="text-[10px] font-mono uppercase text-muted-foreground flex items-center gap-1.5">
                   <List className="w-3 h-3 text-primary" /> Book Chapters
                 </h3>
@@ -186,7 +186,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
         <main className={`flex-1 flex flex-col min-w-0 ${isFocusMode ? 'h-full' : ''}`}>
           
           {/* Top Inline Toolbar (Compact) */}
-          <div className="flex flex-wrap items-center justify-between gap-2 p-2 px-3 mb-4 rounded-xl bg-card/80 backdrop-blur border border-border">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2 px-3 mb-4 rounded-xl bg-card/90 backdrop-blur-md border border-border/70 shadow-lg">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-mono text-muted-foreground">FONT</span>
@@ -210,7 +210,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
             </div>
           </div>
 
-          <div className={`bg-[#0b101a] border border-border/50 rounded-2xl p-5 md:p-6 cyber-card shadow-2xl relative z-10 transition-all duration-500 overflow-hidden ${isFocusMode ? "flex-1 flex flex-col min-h-0" : ""}`}>
+          <div className={`bg-[#060a14]/94 backdrop-blur-xl border border-border/60 rounded-2xl p-5 md:p-6 cyber-card shadow-2xl relative z-10 transition-all duration-500 overflow-hidden ${isFocusMode ? "flex-1 flex flex-col min-h-0" : ""}`}>
             
             {/* Title Block (Centered max-w-3xl) */}
             <div className="mb-3 pb-3 border-b border-border/40 flex flex-col items-start mt-1 shrink-0 max-w-4xl mx-auto w-full">
@@ -284,8 +284,8 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
 
         {/* RIGHT SIDEBAR: Meta & Actions */}
         {!isFocusMode && (
-          <aside className="hidden xl:flex flex-col w-56 shrink-0 space-y-4 pt-2 sticky top-4 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pl-2">
-            <div className="p-4 rounded-xl bg-card border border-border space-y-3">
+          <aside className="hidden xl:flex flex-col w-56 shrink-0 space-y-4 pt-2 sticky top-4 self-start h-fit max-h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar pl-2">
+            <div className="p-4 rounded-xl bg-card/90 backdrop-blur-md border border-border/70 space-y-3 shadow-lg">
               <h3 className="text-[10px] font-mono uppercase text-muted-foreground flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-[hsl(var(--neon-green))]" /> Note Metrics</h3>
               <div className="space-y-2 text-xs font-mono text-muted-foreground">
                 <div className="flex justify-between border-b border-border/40 pb-1"><span>Difficulty</span><span className="text-foreground">{note.difficulty.toUpperCase()}</span></div>
@@ -294,7 +294,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-card border border-border space-y-3">
+            <div className="p-4 rounded-xl bg-card/90 backdrop-blur-md border border-border/70 space-y-3 shadow-lg">
                <h3 className="text-[10px] font-mono uppercase text-muted-foreground flex items-center gap-1.5"><Target className="w-3 h-3 text-[hsl(var(--neon-blue))]" /> Actions</h3>
                <div className="space-y-2">
                  <button onClick={handleCopyPage} className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-foreground transition-colors">
