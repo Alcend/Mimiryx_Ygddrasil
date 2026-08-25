@@ -138,7 +138,8 @@ Raw Content:
 export const streamResearch = async (
   topic: string, 
   apiKey: string, 
-  onChunk: (text: string) => void
+  onChunk: (text: string) => void | Promise<void>,
+  abortSignal?: AbortSignal
 ): Promise<{ text: string; grounding: GroundingMetadata }> => {
   if (!apiKey) throw new Error('No API key provided.');
 
@@ -151,6 +152,8 @@ export const streamResearch = async (
   for (const attempt of attempts) {
     let retries = attempt.maxRetries;
     while (retries > 0) {
+      if (abortSignal?.aborted) throw new Error('ABORTED');
+      
       const activeKey = getActiveKey(apiKey);
       if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
       console.log(`[Gemini StreamResearch] Resolved key: ${activeKey.slice(0, 6)}...${activeKey.slice(-4)} | Attempt: Tools=${attempt.useTools}`);
@@ -161,7 +164,7 @@ export const streamResearch = async (
             text: `Research this topic comprehensively: ${topic}. Provide historical context, technical details, current state of the art, and core concepts. Be extremely detailed.` 
           }] 
         }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
+        generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
       };
 
       // Only add tools if this attempt allows it
@@ -176,6 +179,7 @@ export const streamResearch = async (
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
+          signal: abortSignal
         });
 
         const isQuotaError = response.status === 429 || response.status === 403 || response.status === 400;
@@ -214,12 +218,13 @@ export const streamResearch = async (
               const dataStr = line.slice(6).trim();
               if (dataStr === '[DONE]') continue;
               
+              let finishError: Error | null = null;
               try {
                 const parsed = JSON.parse(dataStr);
                 const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (chunk) {
                   fullText += chunk;
-                  onChunk(chunk);
+                  await onChunk(chunk);
                 }
 
                 const meta = parsed.candidates?.[0]?.groundingMetadata;
@@ -234,10 +239,17 @@ export const streamResearch = async (
                     grounding.webUrls = [...new Set([...(grounding.webUrls || []), ...urls])];
                   }
                 }
+                
+                const finishReason = parsed.candidates?.[0]?.finishReason;
+                if (finishReason && finishReason !== 'STOP') {
+                  finishError = new Error(`STREAM_TRUNCATED: ${finishReason}`);
+                }
               } catch (e) {
                 // intentionally ignore parse errors on partial chunks
                 void e;
               }
+              
+              if (finishError) throw finishError;
             }
           }
         }
@@ -261,7 +273,8 @@ export const streamResearch = async (
 export const streamSynthesis = async (
   rawResearch: string, 
   apiKey: string, 
-  onChunk: (text: string) => void
+  onChunk: (text: string) => void | Promise<void>,
+  abortSignal?: AbortSignal
 ): Promise<string> => {
   if (!apiKey) throw new Error('No API key provided.');
 
@@ -285,21 +298,31 @@ summary: "1-sentence summary"
     contents: [
       { parts: [{ text: `${sysPrompt}\n\nHere is the Raw Research to process:\n\n${rawResearch}` }] }
     ],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
+    // Increase to 8192 to prevent mid-sentence truncation of long documents
+    generationConfig: { temperature: 0.2, maxOutputTokens: 8192 }
   };
 
   let response: Response | undefined;
   let retries = 2;
   while (retries > 0) {
+    if (abortSignal?.aborted) throw new Error('ABORTED');
+    
     const activeKey = getActiveKey(apiKey);
     if (!activeKey) throw new Error('No valid API key could be resolved from the key ring.');
     console.log('[Gemini StreamSynthesis] Resolved key:', activeKey.slice(0, 6) + '...' + activeKey.slice(-4), '| Length:', activeKey.length);
     const currentEndpoint = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${GEMINI_MODELS.synthesis}:streamGenerateContent?alt=sse&key=${activeKey}`;
-    response = await fetch(currentEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    
+    try {
+      response = await fetch(currentEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: abortSignal
+      });
+    } catch (err: any) {
+      if (err.name === 'AbortError') throw err;
+      throw err;
+    }
     
     const isQuotaError = response.status === 429 || response.status === 403 || response.status === 400;
     if (isQuotaError) {
@@ -337,17 +360,27 @@ summary: "1-sentence summary"
         const dataStr = line.slice(6).trim();
         if (dataStr === '[DONE]') continue;
         
+        let finishError: Error | null = null;
         try {
           const parsed = JSON.parse(dataStr);
           const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
           if (chunk) {
             fullText += chunk;
-            onChunk(chunk);
+            await onChunk(chunk);
+          }
+          
+          // Check for unnatural termination (e.g. MAX_TOKENS, SAFETY, etc.)
+          const finishReason = parsed.candidates?.[0]?.finishReason;
+          if (finishReason && finishReason !== 'STOP') {
+            finishError = new Error(`STREAM_TRUNCATED: ${finishReason}`);
           }
         } catch (e) {
-          // intentionally ignore parse errors on partial chunks
+          // intentionally ignore JSON parse errors on partial chunks
           void e;
         }
+        
+        // Throw outside the try/catch so it's not swallowed
+        if (finishError) throw finishError;
       }
     }
   }

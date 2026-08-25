@@ -169,11 +169,12 @@ const runPipeline = async (job: AIJob) => {
       // We'll use a chunk watchdog here to prevent infinite hangs
       let lastChunkTime = Date.now();
       let isDone = false;
+      const ac = new AbortController();
       
       const watchdog = setInterval(() => {
-        if (!isDone && Date.now() - lastChunkTime > 15000) {
-          console.error(`[AI Worker] Watchdog timeout on job ${job.id}`);
-          throw new Error('STREAM_TIMEOUT');
+        if (!isDone && Date.now() - lastChunkTime > 25000) {
+          console.error(`[AI Worker] Watchdog timeout on job ${job.id} (Research)`);
+          ac.abort(new Error('STREAM_TIMEOUT'));
         }
       }, 5000);
 
@@ -187,7 +188,8 @@ const runPipeline = async (job: AIJob) => {
             await updateJob(job.id, { researchText: currentResearch });
             self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
           }
-        }
+        },
+        ac.signal
       );
       
       fullResearch = researchRes.text;
@@ -213,17 +215,35 @@ const runPipeline = async (job: AIJob) => {
       self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
     } else {
       let currentSynthesis = '';
+      
+      let lastChunkTime = Date.now();
+      let isDone = false;
+      const ac = new AbortController();
+      
+      const watchdog = setInterval(() => {
+        if (!isDone && Date.now() - lastChunkTime > 25000) {
+          console.error(`[AI Worker] Watchdog timeout on job ${job.id} (Synthesis)`);
+          ac.abort(new Error('STREAM_TIMEOUT'));
+        }
+      }, 5000);
+
       fullSynthesis = await streamSynthesis(
         fullResearch,
         apiKey,
         async (chunk) => {
+          lastChunkTime = Date.now();
           currentSynthesis += chunk;
           if (Math.random() < 0.1) {
             await updateJob(job.id, { synthesisText: currentSynthesis });
             self.postMessage({ type: 'JOB_UPDATED', jobId: job.id });
           }
-        }
+        },
+        ac.signal
       );
+      
+      isDone = true;
+      clearInterval(watchdog);
+      
       requestCache.set(synthesisCacheKey, fullSynthesis);
     }
     
@@ -269,6 +289,8 @@ const runPipeline = async (job: AIJob) => {
     console.error(`[AI Worker] Error on job ${job.id}:`, error);
     
     const isRateLimit = error.message.includes('429') || error.message.includes('Quota');
+    const isTruncated = error.message.includes('STREAM_TRUNCATED');
+    const isTimeout = error.message.includes('STREAM_TIMEOUT') || error.name === 'AbortError';
     
     if (isRateLimit) {
       // Mark key cooldown and retry job transiently
@@ -277,6 +299,12 @@ const runPipeline = async (job: AIJob) => {
         status: 'FAILED_TRANSIENT',
         lastError: 'Rate Limited (429). Retrying with next key.',
         nextRetryAt: Date.now() + 5000 // Retry in 5s
+      });
+    } else if (isTruncated || isTimeout) {
+      await updateJob(job.id, {
+        status: 'DEAD_LETTER',
+        lastError: isTruncated ? 'Job truncated: ' + error.message : 'Stream timed out',
+        retryCount: job.maxRetries
       });
     } else {
       // Other error (e.g. SCHEMA_MISMATCH, 503, etc)
