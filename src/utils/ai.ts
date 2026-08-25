@@ -86,8 +86,9 @@ App Goals & Your Purpose:
 2. Guide them on creating clear, structured Topics and Notes.
 3. Suggest adding new Topics ONLY if it makes logical sense for their overarching learning path. DO NOT suggest adding random, overly broad, or irrelevant topics just to fill space.
 4. When synthesizing information or answering questions, you must improve clarity and remove redundancy, BUT you must retain all significant details, concepts, and nuance. Never sacrifice accuracy or big details for the sake of being brief.
+5. When explaining complex or abstract concepts, ALWAYS provide vivid, relatable analogies to help the user learn and internalize the knowledge.
 
-Keep your answers well-formatted using markdown (bolding, lists, etc.) and highly educational. 
+Keep your answers well-formatted using markdown (bolding, lists, etc.) and highly educational. DO NOT wrap your entire response in a markdown code block (e.g., \`\`\`markdown).
 
 User Context:
 ${knowledgeContext ? `The user is currently studying or looking at: ${knowledgeContext}` : 'The user is in the main dashboard.'}
@@ -105,12 +106,12 @@ Current Note Content:
 "${currentContent}"
 
 Your task is to expand, organize, and synthesize this note.
-1. Remove redundancies and tighten the phrasing.
-2. Retain ALL bigger details, technical specifics, and important nuance from the user's original text.
-3. Add logical expansions, bullet points, or code snippets that directly complement the user's topic.
+1. Retain ALL original facts, technical specifics, data, and nuance from the user's text. NEVER delete or condense important information.
+2. Expand the note logically by adding deeper context, background information, or relevant code snippets.
+3. Introduce vivid analogies or real-world examples to make abstract ideas in the note easier to grasp.
 4. Organize the final output with clear markdown headers (e.g., ##, ###) and lists.
 
-Respond ONLY with the raw markdown content that should be appended or used to replace the note. Do not include conversational introductory text. Do not wrap in a global markdown code block.
+Respond ONLY with the raw markdown content. DO NOT include conversational introductory text. DO NOT wrap the output in a global markdown code block (e.g., \`\`\`markdown).
   `.trim();
 };
 
@@ -129,6 +130,8 @@ CRITICAL REQUIREMENTS:
 6. If there are image links, URLs, or image references in the raw text, preserve them using standard Markdown image syntax ![Alt Text](URL) and place them appropriately to fit the context.
 7. Do NOT remove any details or text from the original content, just format and paginate it.
 8. Respond ONLY with the raw markdown. Do not wrap in a global code block or add introductory text.
+9. DO NOT wrap your entire response in a markdown code block (e.g., \`\`\`markdown).
+10. Retain EVERY SINGLE detail, paragraph, and fact from the raw content. Your task is strictly layout and formatting, NOT summarization or editing.
 
 Raw Content:
 "${currentContent}"
@@ -161,7 +164,7 @@ export const streamResearch = async (
       const payload: any = {
         contents: [{ 
           parts: [{ 
-            text: `Research this topic comprehensively: ${topic}. Provide historical context, technical details, current state of the art, and core concepts. Be extremely detailed.` 
+            text: `Research this topic comprehensively: ${topic}. Provide deep historical context, granular technical details, current state of the art, and core concepts. Be extremely detailed and exhaustive. Do not provide surface-level summaries. Include vivid analogies or real-world examples to explain complex mechanisms.` 
           }] 
         }],
         generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
@@ -292,7 +295,9 @@ summary: "1-sentence summary"
 3. Use Markdown headers (###), bullet points, and bold text.
 4. For Mathematical equations, use $$...$$ for block and $...$ for inline.
 5. If a code block spans pages, never break it mid-fence.
-6. Respond ONLY with the raw markdown. No conversational text.`;
+6. NEVER drop, condense, or summarize away important technical details, data points, or nuanced explanations from the raw research. Retain the depth and granularity of the information.
+7. Integrate vivid analogies or real-world examples naturally into the explanations to accelerate learning.
+8. Respond ONLY with the raw markdown. No conversational text. DO NOT wrap your entire response in a markdown code block (e.g., \`\`\`markdown).`;
 
   const payload = {
     contents: [
