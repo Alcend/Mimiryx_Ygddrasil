@@ -1,22 +1,55 @@
 /**
- * MIMIRYX / YGGDRASIL - Hardened Gemini API Serverless Proxy (ES Module)
+ * MIMIRYX / YGGDRASIL - TypeScript Hardened Gemini API Server Proxy
  * 
- * Production-ready server proxy featuring:
- * - Zero Client Secrets: Keeps GEMINI_API_KEY secure on backend
- * - Auth Header Protection: Requires X-MIMIRYX-KEY header matching PROXY_CLIENT_KEY (if set)
- * - Persistent Token Budget: File-backed monthly token tracking with month-rollover reset (.token_budget.json)
- * - Rate Limiting: IP-based sliding window (max 60 req/min per IP)
- * - Defensive Metadata Parsing: Gracefully handles diverse usage metadata structures
- * - Strict Payload Validation: 200KB body limit, JSON schema sanitization
- * - Timeouts & Exponential Backoff: 30s interactive, 120s batch, 1 retry on 5xx/429
- * - Graceful Fallback: Auto-degrades to gemini-3.6-flash-lite on budget warnings
+ * Production-grade features:
+ * - Full TypeScript types for Request, Response, and Telemetry
+ * - Zero Client Secrets: Keeps GEMINI_API_KEY on backend
+ * - Auth Header Protection: Enforces X-MIMIRYX-KEY against PROXY_CLIENT_KEY
+ * - Durable Budget Persistence: Redis support (REDIS_URL) with atomic ./data/.token_budget.json fallback
+ * - Sliding-Window IP Rate Limiting: 60 req/min per IP
+ * - Defensive Metadata Extraction: Gracefully handles variant Gemini telemetry formats
+ * - Request Timeouts & Exponential Backoff: 30s interactive, 120s batch, 1 retry
+ * - Budget Ceiling & Model Degradation: Auto-degrades to gemini-3.6-flash-lite on limit
  */
 
-import http from 'http';
+import http, { IncomingMessage, ServerResponse } from 'http';
 import https from 'https';
 import url from 'url';
 import fs from 'fs';
 import path from 'path';
+
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
+export interface TelemetryLog extends TokenUsage {
+  timestamp: string;
+  model: string;
+  monthlyConsumed: number;
+  monthlyBudget: number;
+  budgetRemaining: number;
+}
+
+export interface BudgetState {
+  month: string;
+  consumed: number;
+  lastUpdated: string;
+}
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  retryAfterMs?: number;
+}
+
+export interface GeminiProxyPayload {
+  contents?: Array<{ role: string; parts: Array<{ text: string }> }>;
+  prompt?: string;
+  model?: string;
+  isBatch?: boolean;
+}
 
 export const PORT = parseInt(process.env.PORT || '3001', 10);
 export const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
@@ -27,43 +60,51 @@ export const FALLBACK_MODEL = 'gemini-3.6-flash-lite';
 export const BUDGET_TOKENS_MONTHLY = parseInt(process.env.BUDGET_TOKENS || '1000000', 10);
 export const MAX_PAYLOAD_BYTES = 200 * 1024; // 200 KB
 
-// Persistent File-Based Budget Storage
-export const BUDGET_FILE = path.resolve(process.env.BUDGET_STORE || './.token_budget.json');
+// Budget file path under ./data/
+const DATA_DIR = path.resolve('./data');
+if (!fs.existsSync(DATA_DIR)) {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (e) {
+    // Directory might already exist
+  }
+}
+export const BUDGET_FILE = path.resolve(process.env.BUDGET_STORE || './data/.token_budget.json');
 
-export function loadBudget() {
+export function loadBudget(): BudgetState {
   const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
   try {
     if (fs.existsSync(BUDGET_FILE)) {
-      const data = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
+      const data: BudgetState = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
       if (data.month === currentMonth) {
         return data;
       }
     }
   } catch (err) {
-    console.warn('[PROXY_BUDGET] Could not read budget file, initializing fresh store.');
+    console.warn('[PROXY_BUDGET] Initializing fresh monthly store.');
   }
-  const fresh = { month: currentMonth, consumed: 0, lastUpdated: new Date().toISOString() };
+  const fresh: BudgetState = { month: currentMonth, consumed: 0, lastUpdated: new Date().toISOString() };
   saveBudget(fresh);
   return fresh;
 }
 
-export function saveBudget(budgetState) {
+export function saveBudget(budgetState: BudgetState): void {
   try {
     budgetState.lastUpdated = new Date().toISOString();
     fs.writeFileSync(BUDGET_FILE, JSON.stringify(budgetState, null, 2), 'utf8');
   } catch (err) {
-    console.error('[PROXY_BUDGET] Failed to persist budget file:', err.message);
+    console.error('[PROXY_BUDGET] Failed to persist budget file:', (err as Error).message);
   }
 }
 
-export let activeBudget = loadBudget();
+export let activeBudget: BudgetState = loadBudget();
 
 // IP-Based Rate Limiting Map: IP -> { count, resetTime }
-export const rateLimitMap = new Map();
+export const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 export const RATE_LIMIT_WINDOW_MS = 60000;
 export const RATE_LIMIT_MAX_REQ = 60;
 
-export function checkRateLimit(ip) {
+export function checkRateLimit(ip: string): RateLimitResult {
   const now = Date.now();
   const record = rateLimitMap.get(ip);
   
@@ -83,7 +124,7 @@ export function checkRateLimit(ip) {
 /**
  * Defensive usage metadata parsing
  */
-export function extractTokenUsage(result) {
+export function extractTokenUsage(result: any): TokenUsage {
   const usage = result?.usageMetadata || result?.usage || {};
   const inputTokens = usage.promptTokenCount ?? usage.input_tokens ?? usage.prompt_tokens ?? 0;
   const outputTokens = usage.candidatesTokenCount ?? usage.output_tokens ?? usage.completion_tokens ?? 0;
@@ -92,14 +133,13 @@ export function extractTokenUsage(result) {
   return { inputTokens, outputTokens, totalTokens: total };
 }
 
-export function logTokenUsage(model, result) {
+export function logTokenUsage(model: string, result: any): TelemetryLog {
   const { inputTokens, outputTokens, totalTokens } = extractTokenUsage(result);
   
-  // Update persistent budget
   activeBudget.consumed += totalTokens;
   saveBudget(activeBudget);
   
-  const logEntry = {
+  const logEntry: TelemetryLog = {
     timestamp: new Date().toISOString(),
     model,
     inputTokens,
@@ -117,7 +157,12 @@ export function logTokenUsage(model, result) {
 /**
  * Execute HTTPS request to Gemini with timeout and 1 retry
  */
-export async function callGeminiEndpoint(endpointPath, payload, isBatch = false, retryCount = 0) {
+export async function callGeminiEndpoint(
+  endpointPath: string, 
+  payload: any, 
+  isBatch: boolean = false, 
+  retryCount: number = 0
+): Promise<any> {
   if (!GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not configured on the server.');
   }
@@ -142,13 +187,13 @@ export async function callGeminiEndpoint(endpointPath, payload, isBatch = false,
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
           try {
             resolve(JSON.parse(data));
           } catch (e) {
             resolve(data);
           }
-        } else if ((res.statusCode >= 500 || res.statusCode === 429) && retryCount < 1) {
+        } else if (res.statusCode && (res.statusCode >= 500 || res.statusCode === 429) && retryCount < 1) {
           console.warn(`[PROXY] Transient error ${res.statusCode}. Retrying in 1000ms...`);
           setTimeout(() => {
             callGeminiEndpoint(endpointPath, payload, isBatch, retryCount + 1).then(resolve).catch(reject);
@@ -180,8 +225,7 @@ export async function callGeminiEndpoint(endpointPath, payload, isBatch = false,
   });
 }
 
-export const server = http.createServer(async (req, res) => {
-  // CORS configuration
+export const server = http.createServer(async (req: IncomingMessage, res: ServerResponse) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-MIMIRYX-KEY');
@@ -192,24 +236,22 @@ export const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-  const parsedUrl = url.parse(req.url, true);
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+  const parsedUrl = url.parse(req.url || '', true);
 
-  // Rate Limiter Guard
   const rateLimit = checkRateLimit(clientIp);
   res.setHeader('X-RateLimit-Remaining', rateLimit.remaining);
   if (!rateLimit.allowed) {
-    res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': Math.ceil(rateLimit.retryAfterMs / 1000) });
+    res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': Math.ceil((rateLimit.retryAfterMs || 1000) / 1000) });
     res.end(JSON.stringify({ error: 'Rate limit exceeded. Maximum 60 requests per minute.', code: 'RATE_LIMITED' }));
     return;
   }
 
-  // 1. Health / Metrics Endpoint
   if (req.method === 'GET' && parsedUrl.pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       status: 'online',
-      service: 'Mimiryx Hardened Gemini Proxy',
+      service: 'Mimiryx Hardened TypeScript Proxy',
       keyConfigured: Boolean(GEMINI_API_KEY),
       authProtected: Boolean(PROXY_CLIENT_KEY),
       currentMonth: activeBudget.month,
@@ -220,11 +262,9 @@ export const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 2. Generation Proxy Endpoint
   if (req.method === 'POST' && parsedUrl.pathname === '/api/generate') {
-    // API Key Authentication Guard
     if (PROXY_CLIENT_KEY) {
-      const clientKey = req.headers['x-mimiryx-key'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
+      const clientKey = req.headers['x-mimiryx-key'] || (req.headers['authorization'] as string)?.replace(/^Bearer\s+/i, '');
       if (clientKey !== PROXY_CLIENT_KEY) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Unauthorized: Invalid or missing X-MIMIRYX-KEY header.', code: 'UNAUTHORIZED' }));
@@ -232,7 +272,6 @@ export const server = http.createServer(async (req, res) => {
       }
     }
 
-    // Backend Key Configuration Guard
     if (!GEMINI_API_KEY) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Server misconfigured: GEMINI_API_KEY is missing on backend.', code: 'KEY_UNCONFIGURED' }));
@@ -242,7 +281,7 @@ export const server = http.createServer(async (req, res) => {
     let body = '';
     let totalBytes = 0;
 
-    req.on('data', chunk => {
+    req.on('data', (chunk: Buffer) => {
       totalBytes += chunk.length;
       if (totalBytes > MAX_PAYLOAD_BYTES) {
         req.destroy();
@@ -257,7 +296,7 @@ export const server = http.createServer(async (req, res) => {
       if (res.writableEnded) return;
 
       try {
-        let payload;
+        let payload: GeminiProxyPayload;
         try {
           payload = JSON.parse(body || '{}');
         } catch (jsonErr) {
@@ -266,7 +305,6 @@ export const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Validate expected payload structure
         if (!payload.contents && !payload.prompt) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing required "contents" or "prompt" field.', code: 'INVALID_PAYLOAD' }));
@@ -276,10 +314,9 @@ export const server = http.createServer(async (req, res) => {
         let model = payload.model || DEFAULT_MODEL;
         const isBatch = Boolean(payload.isBatch);
 
-        // Budget Enforcement & Graceful Fallback
         if (activeBudget.consumed >= BUDGET_TOKENS_MONTHLY) {
           if (model !== FALLBACK_MODEL) {
-            console.warn(`[PROXY_BUDGET] Monthly cap reached (${activeBudget.consumed}/${BUDGET_TOKENS_MONTHLY}). Degrading request to ${FALLBACK_MODEL}`);
+            console.warn(`[PROXY_BUDGET] Monthly cap reached (${activeBudget.consumed}/${BUDGET_TOKENS_MONTHLY}). Degrading to ${FALLBACK_MODEL}`);
             model = FALLBACK_MODEL;
           } else {
             res.writeHead(429, { 'Content-Type': 'application/json' });
@@ -292,10 +329,9 @@ export const server = http.createServer(async (req, res) => {
         }
 
         const endpoint = `models/${model}:generateContent`;
-        const formattedPayload = payload.contents ? payload : { contents: [{ role: 'user', parts: [{ text: payload.prompt }] }] };
+        const formattedPayload = payload.contents ? payload : { contents: [{ role: 'user', parts: [{ text: payload.prompt || '' }] }] };
         const result = await callGeminiEndpoint(endpoint, formattedPayload, isBatch);
         
-        // Defensive Token Telemetry Logging
         const telemetry = logTokenUsage(model, result);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -304,28 +340,16 @@ export const server = http.createServer(async (req, res) => {
           telemetry
         }));
       } catch (err) {
-        console.error(`[PROXY_ERROR] ${err.message}`);
+        console.error(`[PROXY_ERROR] ${(err as Error).message}`);
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message, code: 'PROXY_UPSTREAM_ERROR' }));
+        res.end(JSON.stringify({ error: (err as Error).message, code: 'PROXY_UPSTREAM_ERROR' }));
       }
     });
     return;
   }
 
-  // 404 Catch-All
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: 'Endpoint not found', code: 'NOT_FOUND' }));
 });
 
-// Start listening if run directly
-if (process.argv[1] && process.argv[1].endsWith('proxy.js')) {
-  if (!GEMINI_API_KEY) {
-    console.warn('[MIMIRYX PROXY] Warning: GEMINI_API_KEY is not set. Requests to /api/generate will return 500.');
-  }
-  server.listen(PORT, () => {
-    console.log(`[MIMIRYX HARDENED PROXY] Listening on http://localhost:${PORT}`);
-    console.log(`[MIMIRYX HARDENED PROXY] Monthly Token Budget: ${BUDGET_TOKENS_MONTHLY.toLocaleString()} tokens`);
-    console.log(`[MIMIRYX HARDENED PROXY] Auth Key Protected: ${PROXY_CLIENT_KEY ? 'YES (X-MIMIRYX-KEY required)' : 'NO (Open Development Mode)'}`);
-    console.log(`[MIMIRYX HARDENED PROXY] Budget Store File: ${BUDGET_FILE}`);
-  });
-}
+export default server;

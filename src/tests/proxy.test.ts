@@ -3,8 +3,11 @@ import {
   extractTokenUsage,
   checkRateLimit,
   loadBudget,
-  saveBudget
-} from '../../server/proxy.js';
+  saveBudget,
+  BUDGET_TOKENS_MONTHLY,
+  FALLBACK_MODEL,
+  DEFAULT_MODEL
+} from '../../server/proxy';
 
 describe('Server Proxy Logic & Defensive Parsing', () => {
   it('should defensively extract tokens from Gemini usageMetadata', () => {
@@ -43,7 +46,7 @@ describe('Server Proxy Logic & Defensive Parsing', () => {
   });
 
   it('should enforce IP rate limiting within the sliding window', () => {
-    const testIp = '192.168.1.100';
+    const testIp = '10.0.0.99';
     
     // First 60 requests should be allowed
     for (let i = 0; i < 60; i++) {
@@ -67,5 +70,11 @@ describe('Server Proxy Logic & Defensive Parsing', () => {
     
     expect(loaded.month).toBe(currentMonth);
     expect(loaded.consumed).toBeGreaterThanOrEqual(5000);
+  });
+
+  it('should export correct model configurations and token defaults', () => {
+    expect(DEFAULT_MODEL).toBe('gemini-3.6-flash');
+    expect(FALLBACK_MODEL).toBe('gemini-3.6-flash-lite');
+    expect(BUDGET_TOKENS_MONTHLY).toBeGreaterThan(0);
   });
 });

@@ -16,3 +16,5 @@ scratch/
 *.utf8
 test_api.js
 append.ts
+data/
+.token_budget.json
