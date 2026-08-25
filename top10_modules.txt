@@ -1,0 +1,11 @@
+Top 10 Modules in Main App Chunk (index-562n8hok.js) & Dedicated Chunks:
+1. vendor-markdown-eBxsNA_d.js: 440.03 kB (132.69 kB gzip) [Vendor: Math & Markdown Engine]
+2. vendor-react-tnUCvJ1c.js: 165.23 kB (54.03 kB gzip) [Vendor: React, React-DOM, Router]
+3. index-562n8hok.js: 155.73 kB (45.54 kB gzip) [Main Application Shell]
+4. Dashboard-BF_33TQY.js: 51.24 kB (15.05 kB gzip) [Dynamic Route: Dashboard & Canvas]
+5. aiPipeline.worker-CNPwTnpp.js: 41.37 kB (Dedicated AI Web Worker)
+6. AnalyticsPage-Ct8KLWmO.js: 35.14 kB (7.55 kB gzip) [Dynamic Route: Analytics]
+7. NotesPage-C51CQL_m.js: 17.77 kB (4.68 kB gzip) [Dynamic Route: Notes Grid]
+8. LabDetailPage-bs3QihhA.js: 16.71 kB (6.48 kB gzip) [Dynamic Route: CLI Lab Sandbox]
+9. BookReader-D_qEvG3k.js: 16.55 kB (4.68 kB gzip) [Dynamic Component: 3D Reader]
+10. TopicCreatorPage-BrDQNClb.js: 15.84 kB (4.85 kB gzip) [Dynamic Route: Topic Creator]

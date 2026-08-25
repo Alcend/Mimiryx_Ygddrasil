@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import rehypeSanitize from 'rehype-sanitize';
-import 'katex/dist/katex.min.css';
+import { loadMathPlugins, containsMath, MathPlugins } from '../utils/lazyMath';
 import { Note, Topic } from '../types';
 import { 
   Type, 
@@ -40,10 +39,18 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
   const [currentPage, setCurrentPage] = useState(0);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [activeRecallMode, setActiveRecallMode] = useState(false);
+  const [mathPlugins, setMathPlugins] = useState<MathPlugins | null>(null);
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
 
   const pages = note.content.split('[PAGE_BREAK]').map(p => p.trim()).filter(Boolean);
   const pagesCount = pages.length;
+
+  // Dynamically load KaTeX plugins only if note content has math
+  useEffect(() => {
+    if (containsMath(note.content)) {
+      loadMathPlugins().then(setMathPlugins).catch(console.error);
+    }
+  }, [note.content]);
 
   // Keyboard navigation for pages
   useEffect(() => {
@@ -241,7 +248,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ note, topic, onEdit }) =
 
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkMath]}
-                    rehypePlugins={[rehypeSanitize, rehypeKatex]}
+                    rehypePlugins={[rehypeSanitize, ...(mathPlugins?.rehypeKatex ? [mathPlugins.rehypeKatex] : [])]}
                     components={{
                       hr: ({node, ...props}) => <hr className="page-break-line my-8 border-border/40" {...props} />,
                       h1: ({node, ...props}) => <h1 className="text-xl font-heading font-bold text-foreground mt-2 mb-4 border-b border-border/40 pb-2" {...props} />,

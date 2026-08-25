@@ -1,0 +1,1 @@
+Yes — server/proxy.js enforces PROXY_CLIENT_KEY auth via X-MIMIRYX-KEY header (lines 186-193), monthly token budget persistence in .token_budget.json (lines 28-50), and IP rate limiting (lines 53-73).

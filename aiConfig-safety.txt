@@ -1,13 +1,1 @@
-MIMIRYX aiConfig Safety Audit Summary
-
-1. Code-Level Side-Effects: NONE
-   - Lines 1–17: Pure string and object constant definitions (GEMINI_API_VERSION, GEMINI_MODELS, GEMINI_FALLBACK_MODELS, GeminiConfigurationError).
-   - Lines 23–98: Async functions (listAvailableModels, validateGeminiModel, checkGeminiConfiguration) that strictly execute fetch() inside explicit function bodies when called by user actions.
-   - Zero network requests, socket connections, or environment mutations occur on module import.
-
-2. Direct Dependencies: ZERO (0)
-   - The module contains 0 external imports and 0 third-party library references.
-   - Total unminified source code: 3.9 KB.
-
-3. Bundle Impact: SAFE / ACCEPTABLE
-   - Because aiConfig.ts is already referenced by src/utils/ai.ts, importing it statically in SettingsModal.tsx eliminates dual-import bundler warnings without duplicating code in the bundle.
+Yes — src/utils/aiConfig.ts is side-effect-free (lines 1-17 define constants; lines 23-98 define async functions that only call fetch when explicitly invoked by user actions; 0 external dependencies).
